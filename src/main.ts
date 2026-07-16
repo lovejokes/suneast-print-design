@@ -16,6 +16,9 @@ import $ from 'jquery'
 import './hiprint/hiprint.bundle.js'
 import './hiprint/hiprint.config.js'
 
+// 禁用 WebSocket 自动连接（不需要直接打印功能）
+;(window as any).autoConnect = false
+
 const app = createApp(App)
 app.use(createPinia())
 app.use(Antd)
