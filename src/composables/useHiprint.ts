@@ -28,18 +28,31 @@ export function useHiprint() {
     }
 
     const { hiprint } = window
-    hiprint.init({
-      providers: providers,
-    })
 
-    hiprintTemplate.value = new hiprint.PrintTemplate({
-      template: panelTemplate,
-      settingContainer: settingContainerSelector,
-      ...options,
-    })
+    try {
+      hiprint.init({ providers })
+    } catch (e) {
+      console.error('hiprint.init 失败:', e)
+      return
+    }
 
-    hiprintTemplate.value.design(containerSelector, { grid: true })
-    isReady.value = true
+    try {
+      hiprintTemplate.value = new hiprint.PrintTemplate({
+        template: panelTemplate,
+        settingContainer: settingContainerSelector,
+        ...options,
+      })
+    } catch (e) {
+      console.error('PrintTemplate 创建失败:', e)
+      return
+    }
+
+    try {
+      hiprintTemplate.value.design(containerSelector, { grid: true })
+      isReady.value = true
+    } catch (e) {
+      console.error('design 调用失败:', e)
+    }
   }
 
   function destroy() {

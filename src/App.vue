@@ -167,22 +167,32 @@ function onElementUpdate(options: Record<string, unknown>) {
 
 onMounted(() => {
   const hiprint = (window as any).hiprint
-  if (!hiprint) return
+  if (!hiprint) {
+    console.error('hiprint 未加载')
+    return
+  }
 
   const defaultProvider = defaultProviderFn(hiprint)()
   const customProvider = customProviderFn(hiprint)()
 
-  init(
-    '#hiprint-printTemplate',
-    '#PrintElementOptionSetting',
-    [defaultProvider, customProvider],
-    store.template,
-    {
-      onDataChanged() {
-        store.pushHistory()
-      },
-    }
-  )
+  // 必须传入原始 JSON 副本，Pinia reactive 代理会导致 hiprint 初始化失败
+  const rawTemplate = JSON.parse(JSON.stringify(store.template))
+
+  try {
+    init(
+      '#hiprint-printTemplate',
+      '#PrintElementOptionSetting',
+      [defaultProvider, customProvider],
+      rawTemplate,
+      {
+        onDataChanged() {
+          store.pushHistory()
+        },
+      }
+    )
+  } catch (e) {
+    console.error('hiprint 初始化失败:', e)
+  }
 
   nextTick(() => {
     const items = document.querySelectorAll('.ep-draggable-item, .element-item')
