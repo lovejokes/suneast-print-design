@@ -78,6 +78,7 @@ const defaultGroups = [
 ]
 
 const customSubKeys = ref(customElementGroups.map(g => g.name))
+const customGroups = customElementGroups
 
 function getIcon(type: string): Component {
   return elementIcons[type] || TextIcon

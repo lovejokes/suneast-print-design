@@ -7,7 +7,7 @@
 
     <template v-else>
       <div class="panel-header">
-        {{ element.printElementType?.title || '元素' }}
+        {{ (element as any).printElementType?.title || '元素' }}
       </div>
 
       <a-collapse v-model:active-key="activeKeys" :bordered="false" expand-icon-position="end">
