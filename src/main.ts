@@ -13,7 +13,11 @@ import $ from 'jquery'
 ;(window as any).$ = $
 ;(window as any).jQuery = $
 
-import './hiprint/hiprint.bundle.js'
+// hiprint 通过 ES module export，需设置到 window 上供 composable 使用
+// @ts-ignore - hiprint.bundle.js is a webpack bundle, TS can't infer named exports
+import { hiprint } from './hiprint/hiprint.bundle.js'
+;(window as any).hiprint = hiprint
+
 import './hiprint/hiprint.config.js'
 
 // 禁用 WebSocket 自动连接（不需要直接打印功能）
