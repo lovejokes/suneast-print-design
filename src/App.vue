@@ -195,9 +195,11 @@ onMounted(() => {
   }
 
   nextTick(() => {
-    const items = document.querySelectorAll('.ep-draggable-item, .element-item')
+    const $ = (window as any).$
+    if (!$) return
+    const items = $('.element-item')
     if (items.length > 0 && hiprint.PrintElementTypeManager) {
-      hiprint.PrintElementTypeManager.buildByHtml(items as any)
+      hiprint.PrintElementTypeManager.buildByHtml(items)
     }
   })
 })
