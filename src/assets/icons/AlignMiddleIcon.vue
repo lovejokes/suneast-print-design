@@ -1,0 +1,7 @@
+<template>
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <line x1="3" y1="3" x2="3" y2="11" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+    <line x1="7" y1="1" x2="7" y2="13" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+    <line x1="11" y1="4" x2="11" y2="10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+  </svg>
+</template>
