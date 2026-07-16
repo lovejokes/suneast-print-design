@@ -1,0 +1,33 @@
+:root {
+  --brand-50: #f0f5ff;
+  --brand-100: #dbe8fe;
+  --brand-200: #bfd6fe;
+  --brand-300: #93bbfd;
+  --brand-400: #609dfa;
+  --brand-500: #4C8BF5;
+  --brand-600: #3b6de6;
+  --brand-700: #2d52d4;
+  --brand-800: #2542ad;
+  --brand-900: #1e3a8a;
+
+  --page-bg: #f5f6f8;
+  --panel-bg: #ffffff;
+  --canvas-bg: #eef0f4;
+  --border-color: #e8e8e8;
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --text-muted: #999999;
+
+  --panel-width-left: 250px;
+  --panel-width-right: 280px;
+  --header-height: 48px;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-paper: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --radius-sm: 4px;
+  --radius-md: 6px;
+
+  --font-size-title: 14px;
+  --font-size-base: 13px;
+  --font-size-sm: 12px;
+}
