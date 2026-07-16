@@ -65,10 +65,8 @@ window.autoConnect = true;
 window.io = io;
 
 var languages = {}
-const ctx = require.context("../i18n", true, /\.json$/);
-ctx.keys().forEach(key => {
-  languages[key.match(/\.\/([^.]+)/)[1]] = ctx(key)
-})
+// require.context is Webpack-specific, stubbed for Vite (i18n not needed)
+var ctx = { keys: function() { return [] } }
 
 var i18n = {
   lang: 'cn',
