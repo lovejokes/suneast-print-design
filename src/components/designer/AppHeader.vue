@@ -54,42 +54,68 @@
 
       <span class="tool-sep" />
 
-      <a-button type="text" size="small" @click="$emit('zoomOut')" :disabled="zoom <= 0.5">
-        <ZoomOutIcon />
-      </a-button>
+      <a-tooltip title="缩小">
+        <a-button type="text" size="small" @click="$emit('zoomOut')" :disabled="zoom <= 0.5">
+          <ZoomOutIcon />
+        </a-button>
+      </a-tooltip>
       <span class="zoom-label">{{ Math.round(zoom * 100) }}%</span>
-      <a-button type="text" size="small" @click="$emit('zoomIn')" :disabled="zoom >= 5">
-        <ZoomInIcon />
-      </a-button>
+      <a-tooltip title="放大">
+        <a-button type="text" size="small" @click="$emit('zoomIn')" :disabled="zoom >= 5">
+          <ZoomInIcon />
+        </a-button>
+      </a-tooltip>
 
       <span class="tool-sep" />
 
-      <a-button type="text" size="small" @click="$emit('undo')">
-        <UndoIcon />
-      </a-button>
-      <a-button type="text" size="small" @click="$emit('redo')">
-        <RedoIcon />
-      </a-button>
+      <a-tooltip title="撤销">
+        <a-button type="text" size="small" @click="$emit('undo')">
+          <UndoIcon />
+        </a-button>
+      </a-tooltip>
+      <a-tooltip title="重做">
+        <a-button type="text" size="small" @click="$emit('redo')">
+          <RedoIcon />
+        </a-button>
+      </a-tooltip>
 
       <span class="tool-sep" />
 
-      <a-button type="text" size="small" @click="$emit('alignLeft')"><AlignLeftIcon /></a-button>
-      <a-button type="text" size="small" @click="$emit('alignCenter')"><AlignCenterIcon /></a-button>
-      <a-button type="text" size="small" @click="$emit('alignRight')"><AlignRightIcon /></a-button>
-      <a-button type="text" size="small" @click="$emit('alignTop')"><AlignTopIcon /></a-button>
-      <a-button type="text" size="small" @click="$emit('alignMiddle')"><AlignMiddleIcon /></a-button>
-      <a-button type="text" size="small" @click="$emit('alignBottom')"><AlignBottomIcon /></a-button>
+      <a-tooltip title="左对齐">
+        <a-button type="text" size="small" @click="$emit('alignLeft')"><AlignLeftIcon /></a-button>
+      </a-tooltip>
+      <a-tooltip title="水平居中">
+        <a-button type="text" size="small" @click="$emit('alignCenter')"><AlignCenterIcon /></a-button>
+      </a-tooltip>
+      <a-tooltip title="右对齐">
+        <a-button type="text" size="small" @click="$emit('alignRight')"><AlignRightIcon /></a-button>
+      </a-tooltip>
+      <a-tooltip title="上对齐">
+        <a-button type="text" size="small" @click="$emit('alignTop')"><AlignTopIcon /></a-button>
+      </a-tooltip>
+      <a-tooltip title="垂直居中">
+        <a-button type="text" size="small" @click="$emit('alignMiddle')"><AlignMiddleIcon /></a-button>
+      </a-tooltip>
+      <a-tooltip title="下对齐">
+        <a-button type="text" size="small" @click="$emit('alignBottom')"><AlignBottomIcon /></a-button>
+      </a-tooltip>
 
       <span class="tool-sep" />
 
-      <a-button type="text" size="small" @click="$emit('bringForward')"><BringForwardIcon /></a-button>
-      <a-button type="text" size="small" @click="$emit('sendBackward')"><SendBackwardIcon /></a-button>
+      <a-tooltip title="上移一层">
+        <a-button type="text" size="small" @click="$emit('bringForward')"><BringForwardIcon /></a-button>
+      </a-tooltip>
+      <a-tooltip title="下移一层">
+        <a-button type="text" size="small" @click="$emit('sendBackward')"><SendBackwardIcon /></a-button>
+      </a-tooltip>
 
       <span class="tool-sep" />
 
-      <a-button type="text" size="small" @click="$emit('toggleGrid')" :class="{ active: gridEnabled }">
-        <GridIcon />
-      </a-button>
+      <a-tooltip title="网格开关">
+        <a-button type="text" size="small" @click="$emit('toggleGrid')" :class="{ active: gridEnabled }">
+          <GridIcon />
+        </a-button>
+      </a-tooltip>
     </div>
   </header>
 </template>

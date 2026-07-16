@@ -1,20 +1,6 @@
 <template>
   <main class="canvas-area">
     <div id="hiprint-printTemplate" class="design-container"></div>
-    <div class="canvas-page-tabs">
-      <a-tag
-        v-for="(panel, idx) in panels"
-        :key="idx"
-        :color="currentPage === idx ? 'blue' : undefined"
-        style="cursor: pointer; margin-right: 4px"
-        @click="$emit('update:currentPage', idx)"
-      >
-        页面 {{ panel.name }}
-      </a-tag>
-      <a-button type="dashed" size="small" @click="$emit('addPage')" style="font-size: 11px">
-        + 添加页面
-      </a-button>
-    </div>
   </main>
 </template>
 
@@ -45,14 +31,17 @@ defineEmits<{
   overflow: auto;
 }
 
-.canvas-page-tabs {
-  height: 32px;
+/* hiprint renders pages stacked vertically; add spacing between them */
+:global(#hiprint-printTemplate .hiprint-printPagination) {
   display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
   align-items: center;
-  padding: 0 12px;
-  background: var(--panel-bg);
-  border-top: 1px solid var(--border-color);
-  gap: 4px;
-  flex-shrink: 0;
+}
+
+/* Paper shadow effect in design mode */
+:global(#hiprint-printTemplate table) {
+  box-shadow: var(--shadow-paper);
 }
 </style>
