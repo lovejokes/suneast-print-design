@@ -1,19 +1,207 @@
 <template>
-  <main class="canvas-area">
-    <div id="hiprint-printTemplate" class="design-container"></div>
+  <main class="canvas-area" ref="canvasAreaRef">
+    <div
+      id="hiprint-printTemplate"
+      class="design-container"
+      ref="designContainerRef"
+    ></div>
+    <!-- 拖拽手柄 -->
+    <div
+      class="resize-handle"
+      :class="{ dragging: isDragging }"
+      @mousedown="onHandleMouseDown"
+    >
+      <div class="resize-handle-bar"></div>
+      <span class="resize-handle-label resize-handle-label--info">画布: {{ canvasHeight }} / 纸张: {{ paperHeight }} mm</span>
+      <span class="resize-handle-label resize-handle-label--hint">拖动调整高度</span>
+      <div class="resize-handle-bar"></div>
+    </div>
+    <!-- 拖拽预览线 -->
+    <div
+      v-if="isDragging"
+      class="drag-preview-line"
+      :style="{ bottom: previewLineBottom + 'px' }"
+    >
+      <span class="drag-preview-label">
+        {{ previewHeight }} mm（{{ previewPages }}页）
+      </span>
+    </div>
   </main>
 </template>
 
 <script setup lang="ts">
-defineProps<{
-  panels: Array<{ name: string | number; index: number }>
-  currentPage: number
+import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
+
+const props = defineProps<{
+  canvasHeight: number
+  paperHeight: number
 }>()
 
-defineEmits<{
-  'update:currentPage': [idx: number]
-  addPage: []
+const emit = defineEmits<{
+  resizeCanvas: [newHeight: number]
 }>()
+
+const canvasAreaRef = ref<HTMLElement>()
+const designContainerRef = ref<HTMLElement>()
+
+const isDragging = ref(false)
+const previewLineBottom = ref(0)
+const previewHeight = ref(0)
+const previewPages = ref(1)
+let dragStartY = 0
+let dragStartHeight = 0
+let highlightedElements: HTMLElement[] = []
+
+// ── 页面边界线 ──
+
+let boundaryObserver: MutationObserver | null = null
+
+function injectBoundaryLines() {
+  const paper = designContainerRef.value?.querySelector('.hiprint-printPaper.design') as HTMLElement
+  if (!paper) return
+
+  // 先断开 observer，避免 DOM 修改触发自身导致死循环
+  boundaryObserver?.disconnect()
+
+  // 清除旧边界线
+  paper.querySelectorAll('.canvas-page-boundary').forEach((el) => el.remove())
+
+  const pageCount = Math.floor(props.canvasHeight / props.paperHeight)
+  const paperPixelHeight = paper.offsetHeight
+  if (!paperPixelHeight || !props.canvasHeight) {
+    setupBoundaryObserver()
+    return
+  }
+  const scale = paperPixelHeight / props.canvasHeight
+
+  for (let i = 1; i < pageCount; i++) {
+    const y = i * props.paperHeight * scale
+    const line = document.createElement('div')
+    line.className = 'canvas-page-boundary'
+    line.style.cssText = `position:absolute;left:0;right:0;top:${y}px;height:0;border-top:1px dashed rgba(24,144,255,0.35);pointer-events:none;z-index:1;`
+    line.title = `第 ${i + 1} 页起始 (${i * props.paperHeight}mm)`
+    paper.appendChild(line)
+  }
+
+  // 重新挂载 observer
+  setupBoundaryObserver()
+}
+
+function setupBoundaryObserver() {
+  const container = designContainerRef.value
+  if (!container) return
+  boundaryObserver?.disconnect()
+  boundaryObserver = new MutationObserver(() => {
+    nextTick(injectBoundaryLines)
+  })
+  boundaryObserver.observe(container, { childList: true, subtree: true })
+}
+
+watch([() => props.canvasHeight, () => props.paperHeight], () => {
+  nextTick(injectBoundaryLines)
+})
+
+// ── 拖拽手柄 ──
+
+function onHandleMouseDown(e: MouseEvent) {
+  if (e.button !== 0) return
+  isDragging.value = true
+  dragStartY = e.clientY
+  dragStartHeight = props.canvasHeight
+  highlightedElements = []
+
+  document.addEventListener('mousemove', onMouseMove)
+  document.addEventListener('mouseup', onMouseUp)
+  e.preventDefault()
+}
+
+function onMouseMove(e: MouseEvent) {
+  if (!isDragging.value || !canvasAreaRef.value) return
+
+  const containerRect = canvasAreaRef.value.getBoundingClientRect()
+  const handleY = e.clientY - containerRect.top
+  // 手柄距离底部的距离
+  const distFromTop = handleY
+  // 计算比例：容器高度对应画布高度
+  const areaHeight = containerRect.height
+  if (!areaHeight) return
+
+  // 拖拽位置映射到画布高度（mm）
+  const ratio = distFromTop / areaHeight
+  const rawHeight = Math.round(ratio * props.canvasHeight)
+  // 贴靠到最近的纸张边界
+  const snapped = snapToPage(rawHeight)
+  const newHeight = Math.max(props.paperHeight, snapped)
+
+  previewHeight.value = newHeight
+  previewPages.value = Math.round(newHeight / props.paperHeight)
+  // 预览线位置（从容器底部算）
+  previewLineBottom.value = areaHeight * (1 - ratio)
+
+  // 高亮被裁剪的元素
+  highlightCutElements(newHeight)
+}
+
+function onMouseUp(_e: MouseEvent) {
+  document.removeEventListener('mousemove', onMouseMove)
+  document.removeEventListener('mouseup', onMouseUp)
+
+  if (!isDragging.value) return
+  isDragging.value = false
+
+  clearHighlights()
+
+  const newHeight = previewHeight.value
+  if (newHeight && newHeight !== props.canvasHeight && newHeight >= props.paperHeight) {
+    emit('resizeCanvas', newHeight)
+  }
+}
+
+function snapToPage(height: number): number {
+  // 向最近的纸张高度倍数贴靠
+  const ph = props.paperHeight
+  const pages = Math.round(height / ph)
+  return Math.max(1, pages) * ph
+}
+
+// ── 裁剪元素高亮 ──
+
+function highlightCutElements(newHeight: number) {
+  clearHighlights()
+  const designEls = designContainerRef.value?.querySelectorAll('.hiprint-printElement') || []
+  designEls.forEach((el) => {
+    const htmlEl = el as HTMLElement
+    const top = parseFloat(htmlEl.style.top || '0')
+    if (top >= newHeight) {
+      // 红色闪烁边框
+      const resizePanel = htmlEl.querySelector('.resize-panel') as HTMLElement
+      if (resizePanel) {
+        resizePanel.classList.add('will-be-cut')
+        highlightedElements.push(resizePanel)
+      }
+    }
+  })
+}
+
+function clearHighlights() {
+  highlightedElements.forEach((el) => el.classList.remove('will-be-cut'))
+  highlightedElements = []
+}
+
+// ── lifecycle ──
+
+onMounted(() => {
+  nextTick(() => {
+    injectBoundaryLines()
+    setupBoundaryObserver()
+  })
+})
+
+onUnmounted(() => {
+  boundaryObserver?.disconnect()
+  document.removeEventListener('mousemove', onMouseMove)
+  document.removeEventListener('mouseup', onMouseUp)
+})
 </script>
 
 <style scoped>
@@ -29,19 +217,174 @@ defineEmits<{
 .design-container {
   flex: 1;
   overflow: auto;
-}
-
-/* hiprint renders pages stacked vertically; add spacing between them */
-:global(#hiprint-printTemplate .hiprint-printPagination) {
+  user-select: none;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  align-items: center;
+}
+
+/* ── 拖拽手柄 ── */
+.resize-handle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  background: #fafafa;
+  border-top: 1px solid var(--border-color);
+  cursor: ns-resize;
+  flex-shrink: 0;
+  transition: background 0.15s;
+  user-select: none;
+}
+
+.resize-handle:hover,
+.resize-handle.dragging {
+  background: #e6f7ff;
+  border-top-color: var(--brand-400);
+}
+
+.resize-handle-bar {
+  flex: 1;
+  height: 0;
+  border-top: 1px solid #d9d9d9;
+}
+
+.resize-handle-label {
+  font-size: 10px;
+  color: #999;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.resize-handle-label--hint {
+  display: none;
+}
+
+.resize-handle:hover .resize-handle-label--info,
+.resize-handle.dragging .resize-handle-label--info {
+  display: none;
+}
+
+.resize-handle:hover .resize-handle-label--hint,
+.resize-handle.dragging .resize-handle-label--hint {
+  display: inline;
+}
+
+.resize-handle:hover .resize-handle-label,
+.resize-handle.dragging .resize-handle-label {
+  color: var(--brand-500);
+}
+
+/* ── 拖拽预览线 ── */
+.drag-preview-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 2px dashed #ff4d4f;
+  pointer-events: none;
+  z-index: 99;
+}
+
+.drag-preview-label {
+  position: absolute;
+  right: 8px;
+  bottom: 4px;
+  font-size: 10px;
+  color: #ff4d4f;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 1px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+</style>
+
+<style>
+/* hiprint canvas — vertical stacking, horizontal centered */
+#hiprint-printTemplate {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  overflow-x: hidden;
+  margin: 0 auto;
+}
+
+#hiprint-printTemplate .hiprint-printPagination {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
   padding: 24px;
   align-items: center;
 }
 
-/* Paper shadow effect in design mode */
-:global(#hiprint-printTemplate table) {
+#hiprint-printTemplate table {
   box-shadow: var(--shadow-paper);
+  margin-left: auto !important;
+  margin-right: auto !important;
+  float: none !important;
+}
+
+#hiprint-printTemplate .hiprint-printPaper.design {
+  background-color: #fff;
+  border: 1px dashed rgba(170, 170, 170, 0.7);
+  position: relative;
+}
+
+/* hover 时去黑色遮罩 */
+#hiprint-printTemplate .hiprint-printElement:not(.editing):hover .resize-panel {
+  display: block !important;
+  background-color: transparent !important;
+}
+
+/* 选中元素：蓝色虚线边框 */
+#hiprint-printTemplate .hiprint-printElement .resize-panel.selected {
+  border: 2px dashed var(--selection-color, #1890ff) !important;
+  background-color: transparent !important;
+}
+
+#hiprint-printTemplate .hiprint-printElement .resize-panel.selected .resizebtn {
+  background: var(--selection-color, #1890ff) !important;
+  border: 2px solid #fff !important;
+  width: 10px !important;
+  height: 10px !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* 将被裁剪的元素：红色闪烁 */
+#hiprint-printTemplate .hiprint-printElement .resize-panel.will-be-cut {
+  border: 2px solid #ff4d4f !important;
+  animation: cut-blink 0.4s ease-in-out infinite alternate;
+}
+
+@keyframes cut-blink {
+  from { opacity: 1; }
+  to { opacity: 0.3; }
+}
+
+/* 缩放拖拽时保留宽高显示 */
+#hiprint-printTemplate .resize-panel .size-box.hide {
+  display: block !important;
+}
+
+/* 整表可拖动，隐藏左上角拖拽色块 */
+#hiprint-printTemplate .hiprint-printElement-table-handle {
+  display: none !important;
+}
+
+/* 防止头尾指示线水平溢出纸张边界 */
+#hiprint-printTemplate .hiprint-printPaper.design {
+  overflow: hidden;
+}
+
+/* 表头选中行：白色文字，在深蓝色(#3e66ad)背景上可见 */
+#hiprint-printTemplate .hitable .selected {
+  color: #fff !important;
+}
+
+/* 表格编辑框：铺满单元格 */
+#hiprint-printTemplate .hitable .hitable-editor-text {
+  width: 100% !important;
+  height: 100% !important;
+  box-sizing: border-box;
 }
 </style>
