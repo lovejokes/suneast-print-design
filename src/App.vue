@@ -23,16 +23,19 @@
       @bring-forward="layer('up')"
       @send-backward="layer('down')"
       @toggle-grid="store.gridEnabled = !store.gridEnabled"
+      @preview="previewOpen = true"
+      @clear-canvas="handleClearCanvas"
+      @increase-height="handleIncreaseHeight"
+      @template="templateModalOpen = true"
     />
 
     <div class="app-body">
       <ElementsPanel ref="elementsPanelRef" />
 
       <DesignCanvas
-        :panels="store.template.panels"
-        :current-page="store.currentPage"
-        @update:current-page="store.setCurrentPage"
-        @add-page="store.addPage()"
+        :canvas-height="canvasHeight"
+        :paper-height="paperHeight"
+        @resize-canvas="onResizeCanvas"
       />
 
       <PropertiesPanel
@@ -54,11 +57,16 @@
       :template="store.template"
       :data="{}"
     />
+
+    <TemplateModal
+      v-model:open="templateModalOpen"
+      @select="onTemplateSelect"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { message } from 'ant-design-vue'
 import { useDesignerStore } from '@/stores/designer'
 import { useHiprint } from '@/composables/useHiprint'
@@ -69,6 +77,7 @@ import ElementsPanel from '@/components/designer/ElementsPanel.vue'
 import DesignCanvas from '@/components/designer/DesignCanvas.vue'
 import PropertiesPanel from '@/components/designer/PropertiesPanel.vue'
 import PrintPreview from '@/components/preview/PrintPreview.vue'
+import TemplateModal from '@/components/designer/TemplateModal.vue'
 
 import defaultProviderFn from '@/providers/default-provider'
 import customProviderFn from '@/providers/custom-provider'
@@ -80,6 +89,7 @@ const { downloadJSON, readFileAsJSON } = useTemplate()
 const elementsPanelRef = ref()
 const fileInputRef = ref<HTMLInputElement>()
 const previewOpen = ref(false)
+const templateModalOpen = ref(false)
 
 const paperSizes: Record<string, { width: number; height: number }> = {
   A3: { width: 420, height: 297 },
@@ -89,6 +99,9 @@ const paperSizes: Record<string, { width: number; height: number }> = {
   B4: { width: 250, height: 353 },
   B5: { width: 176, height: 250 },
 }
+
+const paperHeight = computed(() => paperSizes[store.paperType]?.height ?? 297)
+const canvasHeight = computed(() => store.template.panels[0]?.paperFooter ?? paperHeight.value)
 
 function paperTypeChange(type: string) {
   store.setPaperType(type)
@@ -109,11 +122,16 @@ function zoomOut() {
 }
 
 function handlePrint() {
-  hiprintTemplate.value?.print?.()
+  // 通过预览弹窗进行打印
+  previewOpen.value = true
 }
 
 function handlePdf() {
-  hiprintTemplate.value?.exportPdf?.()
+  try {
+    hiprintTemplate.value?.toPdf?.({}, '打印.pdf')
+  } catch (e) {
+    console.error('导出 PDF 失败', e)
+  }
 }
 
 function handleNew() {
@@ -161,6 +179,36 @@ function layer(dir: string) {
   }
 }
 
+function onResizeCanvas(newHeight: number) {
+  if (store.template.panels[0]) {
+    store.template.panels[0].paperFooter = newHeight
+    store.pushHistory()
+  }
+}
+
+function handleClearCanvas() {
+  store.clearPaper()
+  hiprintTemplate.value?.update?.(store.template)
+}
+
+function handleIncreaseHeight() {
+  const ph = paperHeight.value
+  const panel = store.template.panels[0]
+  if (panel) {
+    const currentHeight = panel.paperFooter ?? ph
+    panel.paperFooter = currentHeight + ph
+    store.pushHistory()
+    hiprintTemplate.value?.update?.(store.template)
+  }
+}
+
+function onTemplateSelect(tpl: any) {
+  if (tpl.template) {
+    store.importTemplate(tpl.template)
+    hiprintTemplate.value?.update?.(store.template)
+  }
+}
+
 function onElementUpdate(options: Record<string, unknown>) {
   hiprintTemplate.value?.updateElementOption?.(options)
 }
@@ -197,7 +245,7 @@ onMounted(() => {
   nextTick(() => {
     const $ = (window as any).$
     if (!$) return
-    const items = $('.element-item')
+    const items = $('.ep-draggable-item')
     if (items.length > 0 && hiprint.PrintElementTypeManager) {
       hiprint.PrintElementTypeManager.buildByHtml(items)
     }

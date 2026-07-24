@@ -8,13 +8,19 @@ export default function (hiprint) {
         return new hiprint.PrintElementTypeGroup(
           group.name,
           group.elements.map(function (el) {
+            var opts = el.options
             var element = {
               tid: el.tid,
               title: el.title,
               type: el.type,
             }
-            if (el.data !== undefined) element.data = el.data
-            if (el.options) element.options = el.options
+            // 字段元素：画布上显示 @字段名（实际值）
+            if (opts && opts.field) {
+              element.data = '@' + opts.field + '（' + (opts.testData || '') + '）'
+            } else if (el.data !== undefined) {
+              element.data = el.data
+            }
+            if (opts) element.options = opts
             return element
           })
         )

@@ -609,6 +609,53 @@
               name: 'zIndex',
               hidden: false
             }]
+        },
+        {
+          name: '边框', options: [
+            {
+              name: 'optionsGroup',
+              hidden: false
+            },
+            {
+              name: 'borderLeft',
+              hidden: false
+            },
+            {
+              name: 'borderTop',
+              hidden: false
+            },
+            {
+              name: 'borderRight',
+              hidden: false
+            },
+            {
+              name: 'borderBottom',
+              hidden: false
+            },
+            {
+              name: 'borderWidth',
+              hidden: false
+            },
+            {
+              name: 'borderColor',
+              hidden: false
+            },
+            {
+              name: 'contentPaddingLeft',
+              hidden: false
+            },
+            {
+              name: 'contentPaddingTop',
+              hidden: false
+            },
+            {
+              name: 'contentPaddingRight',
+              hidden: false
+            },
+            {
+              name: 'contentPaddingBottom',
+              hidden: false
+            }]
         }],
       supportOptions: [
         {
@@ -762,7 +809,7 @@
       ],
       default: {
         height: 42,
-        width: 550,
+        width: 300,
         backgroundColor: '',
         borderColor: '',
       }
@@ -1046,8 +1093,10 @@
         }
       ],
       default: {
-        width: 550,
+        width: 300,
         tableHeaderBackground: '',
+        tableHeaderRowHeight: 25,
+        tableBodyRowHeight: 25,
       }
     },
     hline: {
@@ -1534,6 +1583,10 @@
       supportOptions: [
         {
           name: 'title',
+          hidden: false
+        },
+        {
+          name: 'field',
           hidden: false
         },
         {

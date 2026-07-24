@@ -16,7 +16,7 @@
 }
 
 .hiprint-printPaper *:focus {
-  outline: -webkit-focus-ring-color auto 0px;
+   outline: var(--selection-color, #1890ff) dashed auto 0px;
 }
 
 .hiprint-printPaper {
@@ -49,6 +49,7 @@
 
 
 .hiprint-printTemplate .hiprint-printPanel {
+  margin-bottom:13px;
   page-break-after: always;
 }
 
@@ -78,7 +79,6 @@
 }
 
 .design .hiprint-printElement-table-content, .design .hiprint-printElement-longText-content {
-  overflow: hidden;
   box-sizing: border-box;
 }
 
@@ -160,24 +160,25 @@
 }
 
 .hiprint-printElement-table thead {
-  background: #e8e8e8;
-  font-weight: 700;
+  background: #fafafa;
+  font-weight: 600;
 }
 
 table.hiprint-printElement-tableTarget {
   width: 100%;
+  border-collapse: collapse;
 }
 
 .hiprint-printElement-tableTarget, .hiprint-printElement-tableTarget tr, .hiprint-printElement-tableTarget td {
-  border-color: rgb(0, 0, 0);
+  border-color: #d9d9d9;
   /*border-style: none;*/
   /*border: 1px solid rgb(0, 0, 0);*/
   font-weight: normal;
   direction: ltr;
-  padding-bottom: 0pt;
-  padding-left: 4pt;
-  padding-right: 4pt;
-  padding-top: 0pt;
+  padding-bottom: 4pt;
+  padding-left: 6pt;
+  padding-right: 6pt;
+  padding-top: 4pt;
   text-decoration: none;
   vertical-align: middle;
   box-sizing: border-box;
@@ -187,47 +188,64 @@ table.hiprint-printElement-tableTarget {
   font-size: 9pt;*/
 }
 
+.hiprint-printElement-tableTarget th {
+  padding: 4pt 6pt;
+  vertical-align: middle;
+  font-weight: 600;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+/* 设计态：表格头加底部分割线，整体更清爽 */
+.design .hiprint-printElement-tableTarget thead th {
+  border-bottom: 1px solid #d9d9d9;
+}
+
 .hiprint-printElement-tableTarget-border-all {
-  border: 1px solid;
+  border: 1px solid #d9d9d9;
 }
 .hiprint-printElement-tableTarget-border-none {
-  border: 0px solid;
+  border: 0px solid #d9d9d9;
 }
 .hiprint-printElement-tableTarget-border-lr {
-  border-left: 1px solid;
-  border-right: 1px solid;
+  border-left: 1px solid #d9d9d9;
+  border-right: 1px solid #d9d9d9;
 }
 .hiprint-printElement-tableTarget-border-left {
-  border-left: 1px solid;
+  border-left: 1px solid #d9d9d9;
 }
 .hiprint-printElement-tableTarget-border-right {
-  border-right: 1px solid;
+  border-right: 1px solid #d9d9d9;
 }
 .hiprint-printElement-tableTarget-border-tb {
-  border-top: 1px solid;
-  border-bottom: 1px solid;
+  border-top: 1px solid #d9d9d9;
+  border-bottom: 1px solid #d9d9d9;
 }
 .hiprint-printElement-tableTarget-border-top {
-  border-top: 1px solid;
+  border-top: 1px solid #d9d9d9;
 }
 .hiprint-printElement-tableTarget-border-bottom {
-  border-bottom: 1px solid;
+  border-bottom: 1px solid #d9d9d9;
 }
 
 .hiprint-printElement-tableTarget-border-td-none td {
-  border: 0px solid;
+  border: 0px solid #d9d9d9;
 }
 .hiprint-printElement-tableTarget-border-td-all td:not(:nth-last-child(-n+2)) {
-  border-right: 1px solid;
+  border-right: 1px solid #d7d2d2;
 }
 .hiprint-printElement-tableTarget-border-td-all td:not(last-child) {
-  border-right: 1px solid;
+  border-right: 1px solid #d9d9d9;
 }
 .hiprint-printElement-tableTarget-border-td-all td:last-child {
-  border-left: 1px solid;
+  border-left: 1px solid #d9d9d9;
 }
 .hiprint-printElement-tableTarget-border-td-all td:last-child:first-child {
   border-left: none;
+}
+
+.hiprint-printElement-tableTarget {
+  border: 1px solid #d9d9d9;
 }
 
 /*.hiprint-printElement-tableTarget tr,*/
@@ -239,12 +257,17 @@ table.hiprint-printElement-tableTarget {
   font-size: 9pt;
 }
 
+/* 拖拽改为整表可拖动，隐藏左上角红色拖拽色块 */
 .design .hiprint-printElement-table-handle {
-  position: absolute;
-  height: 21pt;
-  width: 21pt;
-  background: red;
-  z-index: 1;
+  display: none !important;
+}
+
+/* 表格 resize 按钮默认隐藏，选中时显示 */
+.design .hiprint-printElement-table .resizebtn {
+  display: none !important;
+}
+.design .hiprint-printElement-table.selected .resizebtn {
+  display: block !important;
 }
 
 .hiprint-printPaper .hiprint-paperNumber-disabled {

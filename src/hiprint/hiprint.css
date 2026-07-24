@@ -7,12 +7,12 @@
 .horLine {
   position: absolute;
   border: 0;
-  border-top: 1px solid rgb(241, 110, 110);
+  border-top: 1px solid #4C8BF5;
 }
 .verLine {
   position: absolute;
   border: 0;
-  border-left: 1px solid rgb(241, 110, 110);
+  border-left: 1px solid #4C8BF5;
 }
 
 /* 拖拽时元素辅助线 */
@@ -27,7 +27,7 @@
 
 /* 拖拽时的坐标位置 */
 .topPosition {
-  background: red;
+  background: rgba(0, 0, 0, 0.65);
   color: white;
   border-radius: 20rem;
   min-width: 10px;
@@ -37,13 +37,13 @@
   z-index: 9;
 }
 .topPosition-lineMode {
-  color: red;
+  color: rgba(0, 0, 0, 0.8);
   background: unset;
   line-height: normal;
   z-index: 9;
 }
 .leftPosition {
-  background: red;
+  background: rgba(0, 0, 0, 0.65);
   color: white;
   border-radius: 20rem;
   min-width: 10px;
@@ -53,7 +53,7 @@
   z-index: 9;
 }
 .leftPosition-lineMode {
-  color: red;
+  color: rgba(0, 0, 0, 0.8);
   background: unset;
   line-height: normal;
   z-index: 9;
@@ -66,11 +66,11 @@
 
 /* 元素宽高 */
 .resize-panel .size-box {
-  border: 1px solid;
+  border: 1px solid rgba(0, 0, 0, 0.15);
   min-height: 19px;
   padding: 0px 4px;
-  background: red;
-  color: white;
+  background: rgba(255, 255, 255, 0.96);
+  color: #111;
   font-size: 12px;
   border-radius: 6px 6px 0 0;
   white-space: nowrap;
@@ -82,7 +82,7 @@
 .hiprint-printElement:not(.editing):hover .resize-panel {
   display: block !important;
   /* hover 强制背景色 可重写 */
-  background-color: rgba(0, 0, 0, 0.5) !important;
+  background-color: rgba(0, 0, 0, 0.1) !important;
 }
 .hiprint-printElement:hover .resize-panel .resizebtn {
   display: none;
@@ -825,7 +825,7 @@ font-weight: normal;*/
 }
 
 .hitable .hitable-editor-text {
-    border: 1px solid;
+    border: 1px solid #d9d9d9;
     width: 95%;
     height: 80%;
 }

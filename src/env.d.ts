@@ -1,5 +1,14 @@
 /// <reference types="vite/client" />
 
+import $ from 'jquery'
+declare global {
+  interface Window {
+    hiprint: any
+    $: any
+    jQuery: any
+    hinnn: any
+  }
+}
 declare module '*.vue' {
   import type { DefineComponent } from 'vue'
   const component: DefineComponent<{}, {}, any>
@@ -12,11 +21,11 @@ declare module '*.js' {
 }
 
 declare module '@/providers/default-provider' {
-  const fn: any
+  const fn: (hiprint: any) => () => { addElementTypes: (context: any) => void }
   export default fn
 }
 
 declare module '@/providers/custom-provider' {
-  const fn: any
+  const fn: (hiprint: any) => () => { addElementTypes: (context: any) => void }
   export default fn
 }

@@ -36,8 +36,6 @@ function _typeof(obj) {
  * import 相关资源
  */
 import $ from "jquery";
-// js颜色选择
-import "@claviska/jquery-minicolors/jquery.minicolors.min";
 // 条形码
 import JsBarcode from "jsbarcode";
 // 二维码
@@ -72,21 +70,23 @@ var i18n = {
   lang: 'cn',
   languages,
   __: function(key, params) {
-    var str = this.languages[this.lang][key] || key
+    var lang = this.languages[this.lang]
+    var str = (lang && lang[key]) || key
     if (params && params instanceof Object) {
-      Object.keys(params).forEach(key => {
-        str = str.replace(new RegExp(`{{${key}}}`, 'g'), params[key])
+      Object.keys(params).forEach(function(k) {
+        str = str.replace(new RegExp('{{' + k + '}}', 'g'), params[k])
       })
       return str
     } else if (params) {
-      str= str.replace(/%s/g, params)
+      str = str.replace(/%s/g, params)
       return str
     } else {
       return str
     }
   },
   __n: function(key, val) {
-    var str = this.languages[this.lang][key]
+    var lang = this.languages[this.lang]
+    var str = (lang && lang[key]) || key
     str = str.replace(/%s/g, val)
     return str
   },
@@ -687,21 +687,25 @@ var hiprint = function (t) {
         return this.options.field || this.printElementType.field;
       }, BasePrintElement.prototype.getTitle = function () {
         return this.printElementType.title;
-      }, BasePrintElement.prototype.updateSizeAndPositionOptions = function (t, e, n, i) {
+      },         BasePrintElement.prototype.updateSizeAndPositionOptions = function (t, e, n, i) {
         const template = _HiPrintlib__WEBPACK_IMPORTED_MODULE_6__.a.instance.getPrintTemplateById(this.templateId)
         if (this.panel !== void 0 && !template.willOutOfBounds) {
           const panelWidthPt = hinnn.mm.toPt(this.panel.width)
           const panelHeightPt = hinnn.mm.toPt(this.panel.height)
-          if (t < 0) {
+          const lo = this.panel.leftOffset != null ? Number(this.panel.leftOffset) : 0
+          const to = this.panel.topOffset != null ? Number(this.panel.topOffset) : 0
+          const ro = this.panel.rightOffset != null ? Number(this.panel.rightOffset) : 0
+          const bo = this.panel.bottomOffset != null ? Number(this.panel.bottomOffset) : 0
+          if (t < lo) {
             return
           }
-          if (e < 0) {
+          if (e < to) {
             return
           }
-          if (t + this.options.width > panelWidthPt) {
+          if (t + this.options.width > panelWidthPt - ro) {
             return
           }
-          if (e + this.options.height > panelHeightPt) {
+          if (e + this.options.height > panelHeightPt - bo) {
             return
           }
         }
@@ -1230,9 +1234,9 @@ var hiprint = function (t) {
           i = $(".rightlineOfPosition.id" + this.id),
           o = $(".bottomlineOfPosition.id" + this.id);
         var config = _HiPrintConfig__WEBPACK_IMPORTED_MODULE_1__.a.instance;
-        if (e.length) e.css("top", this.options.displayTop(true)); else {
+        if (e.length) e.css("top", this.options.displayTop(true)), e.css("left", this.options.displayLeft(true)); else {
           var e = $('<div class="toplineOfPosition id' + this.id + '" style="position: absolute; width: 100%;"></div>');
-          e.css("top", this.options.displayTop(true)), e.css("width", t.displayWidth()), this.designTarget.parents(".hiprint-printPaper-content").append(e);
+          e.css("top", this.options.displayTop(true)), e.css("left", this.options.displayLeft(true)), e.css("width", t.displayWidth()), this.designTarget.parents(".hiprint-printPaper-content").append(e);
         }
         if (config.showPosition) {
           if (topPos.length) {
@@ -1259,9 +1263,9 @@ var hiprint = function (t) {
             topPos.css("top", (this.options.posTop() - topPos.height()) + "pt");
           }
         }
-        if (n.length) n.css("left", this.options.displayLeft(true)); else {
+        if (n.length) n.css("left", this.options.displayLeft(true)), n.css("top", this.options.displayTop(true)); else {
           var r = $('<div class="leftlineOfPosition id' + this.id + '" style="position: absolute;height: 100%;"></div>');
-          r.css("left", this.options.displayLeft(true)), r.css("height", t.displayHeight()), this.designTarget.parents(".hiprint-printPaper-content").append(r);
+          r.css("left", this.options.displayLeft(true)), r.css("top", this.options.displayTop(true)), r.css("height", t.displayHeight()), this.designTarget.parents(".hiprint-printPaper-content").append(r);
         }
         if (config.showPosition) {
           if (leftPos.length) {
@@ -1286,13 +1290,13 @@ var hiprint = function (t) {
             leftPos.css("left", (this.options.posLeft() - leftPos.width()) + "pt");
           }
         }
-        if (i.length) i.css("left", this.options.getLeft() + this.options.getWidth() + "pt"); else {
+        if (i.length) i.css("left", this.options.getLeft() + this.options.getWidth() + "pt"), i.css("top", this.options.displayTop(true)); else {
           var a = $('<div class="rightlineOfPosition id' + this.id + '" style="position: absolute;height: 100%;"></div>');
-          a.css("left", this.options.getLeft() + this.options.getWidth() + "pt"), a.css("height", t.displayHeight()), this.designTarget.parents(".hiprint-printPaper-content").append(a);
+          a.css("left", this.options.getLeft() + this.options.getWidth() + "pt"), a.css("top", this.options.displayTop(true)), a.css("height", t.displayHeight()), this.designTarget.parents(".hiprint-printPaper-content").append(a);
         }
-        if (o.length) o.css("top", this.options.getTop() + this.options.getHeight() + "pt"); else {
+        if (o.length) o.css("top", this.options.getTop() + this.options.getHeight() + "pt"), o.css("left", this.options.displayLeft(true)); else {
           var p = $('<div class="bottomlineOfPosition id' + this.id + '" style="position: absolute;width: 100%;"></div>');
-          p.css("top", this.options.getTop() + this.options.getHeight() + "pt"), p.css("width", t.displayWidth()), this.designTarget.parents(".hiprint-printPaper-content").append(p);
+          p.css("top", this.options.getTop() + this.options.getHeight() + "pt"), p.css("left", this.options.displayLeft(true)), p.css("width", t.displayWidth()), this.designTarget.parents(".hiprint-printPaper-content").append(p);
         }
       }, BasePrintElement.prototype.removeLineOfPosition = function () {
         $(".toplineOfPosition.id" + this.id).remove(), $(".topPosition.id" + this.id).remove(), this.designTarget.find('.size-box') && this.designTarget.find('.size-box').toggleClass('hide', false), $(".leftlineOfPosition.id" + this.id).remove(), $(".leftPosition.id" + this.id).remove(), $(".rightlineOfPosition.id" + this.id).remove(), $(".bottomlineOfPosition.id" + this.id).remove();
@@ -2695,15 +2699,12 @@ var hiprint = function (t) {
 
         return null;
       }, t.prototype.createTarget = function () {
-        return this.target = $(`<div class="hiprint-option-item">\n        <div class="hiprint-option-item-label">\n        ${i18n.__('表头背景')}\n        </div>\n        <div class="hiprint-option-item-field">\n        <input type="text" class="auto-submit" />\n        </div>\n    </div>`), this.target;
+        return this.target = $(`<div class="hiprint-option-item">\n        <div class="hiprint-option-item-label">\n        ${i18n.__('表头背景')}\n        </div>\n        <div class="hiprint-option-item-field">\n        <input type="color" class="auto-submit" />\n        </div>\n    </div>`), this.target;
       }, t.prototype.getValue = function () {
         var t = this.target.find("input").val();
         if (t) return t.toString();
       }, t.prototype.setValue = function (t) {
-        this.target.find("input").minicolors({
-          defaultValue: t || "",
-          theme: "bootstrap"
-        }), this.target.find("input").val(t);
+        this.target.find("input").val(t || "#000000");
       }, t.prototype.destroy = function () {
         this.target.remove();
       }, t;
@@ -3332,15 +3333,12 @@ var hiprint = function (t) {
 
         return null;
       }, t.prototype.createTarget = function () {
-        return this.target = $(`<div class="hiprint-option-item">\n        <div class="hiprint-option-item-label">\n        ${i18n.__('字体颜色')}\n        </div>\n        <div class="hiprint-option-item-field">\n        <input type="text" class="auto-submit"/>\n        </div>\n    </div>`), this.target;
+        return this.target = $(`<div class="hiprint-option-item">\n        <div class="hiprint-option-item-label">\n        ${i18n.__('字体颜色')}\n        </div>\n        <div class="hiprint-option-item-field">\n        <input type="color" class="auto-submit"/>\n        </div>\n    </div>`), this.target;
       }, t.prototype.getValue = function () {
         var t = this.target.find("input").val();
         if (t) return t.toString();
       }, t.prototype.setValue = function (t) {
-        this.target.find("input").minicolors({
-          defaultValue: t || "",
-          theme: "bootstrap"
-        }), this.target.find("input").val(t);
+        this.target.find("input").val(t || "#000000");
       }, t.prototype.destroy = function () {
         this.target.remove();
       }, t;
@@ -3460,25 +3458,35 @@ var hiprint = function (t) {
         return n.target;
       }, t.prototype.createSyncLock = function (t) {
         var n = this;
-        n.lockTarget = n.syncLock ? $(`<label style="margin: 0 4px;text-align:center;width: 8%" title="${i18n.__('同步')}">🔗</label>`) : $(`<label style="margin: 0 4px;text-align:center;width: 8%" title="${i18n.__('不同步')}">🔓</label>`);
-        n.lockTarget.click(function () {
+        var lockSvg = '<svg class="sync-lock-icon" viewBox="64 64 896 896" width="13" height="13" fill="currentColor"><path d="M832 464h-68V240c0-70.7-57.3-128-128-128H388c-70.7 0-128 57.3-128 128v224h-68c-17.7 0-32 14.3-32 32v384c0 17.7 14.3 32 32 32h640c17.7 0 32-14.3 32-32V496c0-17.7-14.3-32-32-32zM332 240c0-30.9 25.1-56 56-56h248c30.9 0 56 25.1 56 56v224H332V240zm460 600H232V536h560v304zM484 701v53c0 4.4 3.6 8 8 8h40c4.4 0 8-3.6 8-8v-53a48.01 48.01 0 1 0-56 0z"/></svg>';
+        var unlockSvg = '<svg class="sync-lock-icon" viewBox="64 64 896 896" width="13" height="13" fill="currentColor"><path d="M832 464H332V240c0-30.9 25.1-56 56-56h248c30.9 0 56 25.1 56 56v68c0 4.4 3.6 8 8 8h56c4.4 0 8-3.6 8-8v-68c0-70.7-57.3-128-128-128H388c-70.7 0-128 57.3-128 128v224H192c-17.7 0-32 14.3-32 32v384c0 17.7 14.3 32 32 32h640c17.7 0 32-14.3 32-32V496c0-17.7-14.3-32-32-32zm-40 424H232V536h560v352zM484 701v53c0 4.4 3.6 8 8 8h40c4.4 0 8-3.6 8-8v-53a48.01 48.01 0 1 0-56 0z"/></svg>';
+        n.lockTarget = n.syncLock ? $('<button type="button" class="sync-lock-btn locked" title="' + i18n.__('锁定') + '">' + lockSvg + '</button>') : $('<button type="button" class="sync-lock-btn" title="' + i18n.__('解锁') + '">' + unlockSvg + '</button>');
+        n.lockTarget.on('click', function (e) {
+          e.preventDefault();
           if (n.syncLock) {
-            n.lockTarget.text("🔓").attr("title", `${i18n.__('不同步')}`);
+            n.lockTarget.removeClass('locked').html(unlockSvg).attr('title', i18n.__('解锁'));
           } else {
-            n.lockTarget.text("🔗").attr("title", `${i18n.__('同步')}`);
+            n.lockTarget.addClass('locked').html(lockSvg).attr('title', i18n.__('锁定'));
           }
           n.syncLock = !n.syncLock;
+          // 立即触发提交，持久化 coordinateSync 状态到元素 options
+          n.target.find("input:first").trigger("change");
         })
         n.target.find("input:first").after(n.lockTarget);
         // 同步编辑...
-        n.target.find("input:first").change(function () {
+        n.target.find("input:first").on("input", function () {
           if (n.syncLock) {
-            n.target.find("input:last").val($(this).val())
+            var last = n.target.find("input:last");
+            last.val($(this).val());
+            // 立即触发 change 提交，确保镜像值同步应用到元素（否则只有手动 blur 才会提交）
+            last.trigger("change");
           }
         });
-        n.target.find("input:last").change(function () {
+        n.target.find("input:last").on("input", function () {
           if (n.syncLock) {
-            n.target.find("input:first").val($(this).val())
+            var first = n.target.find("input:first");
+            first.val($(this).val());
+            first.trigger("change");
           }
         });
         return n.lockTarget
@@ -3527,25 +3535,35 @@ var hiprint = function (t) {
         return n.target;
       }, t.prototype.createSyncLock = function (t) {
         var n = this;
-        n.lockTarget = n.syncLock ? $(`<label style="margin: 0 4px;text-align:center;width: 8%" title="${i18n.__('同步')}">🔗</label>`) : $(`<label style="margin: 0 4px;text-align:center;width: 8%" title="${i18n.__('不同步')}">🔓</label>`);
-        n.lockTarget.click(function () {
+        var lockSvg = '<svg class="sync-lock-icon" viewBox="64 64 896 896" width="13" height="13" fill="currentColor"><path d="M832 464h-68V240c0-70.7-57.3-128-128-128H388c-70.7 0-128 57.3-128 128v224h-68c-17.7 0-32 14.3-32 32v384c0 17.7 14.3 32 32 32h640c17.7 0 32-14.3 32-32V496c0-17.7-14.3-32-32-32zM332 240c0-30.9 25.1-56 56-56h248c30.9 0 56 25.1 56 56v224H332V240zm460 600H232V536h560v304zM484 701v53c0 4.4 3.6 8 8 8h40c4.4 0 8-3.6 8-8v-53a48.01 48.01 0 1 0-56 0z"/></svg>';
+        var unlockSvg = '<svg class="sync-lock-icon" viewBox="64 64 896 896" width="13" height="13" fill="currentColor"><path d="M832 464H332V240c0-30.9 25.1-56 56-56h248c30.9 0 56 25.1 56 56v68c0 4.4 3.6 8 8 8h56c4.4 0 8-3.6 8-8v-68c0-70.7-57.3-128-128-128H388c-70.7 0-128 57.3-128 128v224H192c-17.7 0-32 14.3-32 32v384c0 17.7 14.3 32 32 32h640c17.7 0 32-14.3 32-32V496c0-17.7-14.3-32-32-32zm-40 424H232V536h560v352zM484 701v53c0 4.4 3.6 8 8 8h40c4.4 0 8-3.6 8-8v-53a48.01 48.01 0 1 0-56 0z"/></svg>';
+        n.lockTarget = n.syncLock ? $('<button type="button" class="sync-lock-btn locked" title="' + i18n.__('锁定') + '">' + lockSvg + '</button>') : $('<button type="button" class="sync-lock-btn" title="' + i18n.__('解锁') + '">' + unlockSvg + '</button>');
+        n.lockTarget.on('click', function (e) {
+          e.preventDefault();
           if (n.syncLock) {
-            n.lockTarget.text("🔓").attr("title", `${i18n.__('不同步')}`);
+            n.lockTarget.removeClass('locked').html(unlockSvg).attr('title', i18n.__('解锁'));
           } else {
-            n.lockTarget.text("🔗").attr("title", `${i18n.__('同步')}`);
+            n.lockTarget.addClass('locked').html(lockSvg).attr('title', i18n.__('锁定'));
           }
           n.syncLock = !n.syncLock;
+          // 立即触发提交，持久化 widthHeightSync 状态到元素 options
+          n.target.find("input:first").trigger("change");
         })
         n.target.find("input:first").after(n.lockTarget);
         // 同步编辑...
-        n.target.find("input:first").change(function () {
+        n.target.find("input:first").on("input", function () {
           if (n.syncLock) {
-            n.target.find("input:last").val($(this).val())
+            var last = n.target.find("input:last");
+            last.val($(this).val());
+            // 立即触发 change 提交，确保镜像值同步应用到元素（否则只有手动 blur 才会提交）
+            last.trigger("change");
           }
         });
-        n.target.find("input:last").change(function () {
+        n.target.find("input:last").on("input", function () {
           if (n.syncLock) {
-            n.target.find("input:first").val($(this).val())
+            var first = n.target.find("input:first");
+            first.val($(this).val());
+            first.trigger("change");
           }
         });
         return n.lockTarget
@@ -3682,15 +3700,12 @@ var hiprint = function (t) {
         return null;
       }, t.prototype.createTarget = function (t) {
         var name = ['hline', 'vline', 'rect', 'oval'].includes(t.printElementType.type) ? `${i18n.__('颜色')}` : `${i18n.__('边框颜色')}`;
-        return this.target = $(`<div class="hiprint-option-item">\n        <div class="hiprint-option-item-label">\n        ${name}\n        </div>\n        <div class="hiprint-option-item-field">\n        <input type="text" class="auto-submit" />\n        </div>\n    </div>`), this.target;
+        return this.target = $(`<div class="hiprint-option-item">\n        <div class="hiprint-option-item-label">\n        ${name}\n        </div>\n        <div class="hiprint-option-item-field">\n        <input type="color" class="auto-submit" />\n        </div>\n    </div>`), this.target;
       }, t.prototype.getValue = function () {
         var t = this.target.find("input").val();
         if (t) return t.toString();
       }, t.prototype.setValue = function (t) {
-        this.target.find("input").minicolors({
-          defaultValue: t || "",
-          theme: "bootstrap"
-        }), this.target.find("input").val(t);
+        this.target.find("input").val(t || "#000000");
       }, t.prototype.destroy = function () {
         this.target.remove();
       }, t;
@@ -3702,7 +3717,7 @@ var hiprint = function (t) {
       return t.prototype.createTarget = function () {
         this.target = $(`<div class="hiprint-option-item hiprint-option-item-row"><div class="hiprint-option-item-label">${i18n.__('水印功能')}</div></div>`);
         this.content = $(`<div class="hiprint-option-item-field" style="display: flex;align-items: baseline;"><div style="width:25%">${i18n.__('水印内容')}:</div><input style="width:75%" type="text" placeholder="${i18n.__('水印内容')}" class="auto-submit"></div>`);
-        this.fillStyle = $(`<div class="hiprint-option-item-field" style="display: flex;align-items: center;margin-top: 4px"><div style="width:25%">${i18n.__('字体颜色')}:</div><input style="width:110%" data-format="rgb" data-opacity="0.3" type="text" placeholder="${i18n.__('字体颜色')}" class="auto-submit"></div>`);
+        this.fillStyle = $(`<div class="hiprint-option-item-field" style="display: flex;align-items: center;margin-top: 4px;gap:8px"><div style="width:25%">${i18n.__('字体颜色')}:</div><input style="width:35%" type="color" class="auto-submit" /><input style="width:55%" type="range" min="0" max="100" step="1" class="auto-submit" title="${i18n.__('透明度')}" /></div>`);
         this.fontSize = $(`<div class="hiprint-option-item-field" style="display: flex;align-items: center;"><div style="width:25%">${i18n.__('字体大小')}:</div><input style="width:75%" type="range" min="10" max="80" placeholder="${i18n.__('字体大小')}" class="auto-submit"></div>`);
         this.rotate = $(`<div class="hiprint-option-item-field" style="display: flex;align-items: center;"><div style="width:25%">${i18n.__('旋转角度')}:</div><input style="width:75%" type="range" min="0" max="180" placeholder="${i18n.__('旋转角度')}" class="auto-submit"></div>`);
         this.width = $(`<div class="hiprint-option-item-field" style="display: flex;align-items: center;"><div style="width:25%">${i18n.__('水平密度')}:</div><input style="width:75%" type="range" min="100" max="800" placeholder="${i18n.__('水平密度')}" class="auto-submit"></div>`);
@@ -3733,9 +3748,15 @@ var hiprint = function (t) {
         this.target.append(this.format);
         return this.target;
       }, t.prototype.getValue = function () {
+        const fillColor = this.fillStyle.find('input[type="color"]').val() || "#b8b8b8";
+        const fillOpacity = parseInt(this.fillStyle.find('input[type="range"]').val() || "30", 10) / 100;
+        const rgb = fillColor.replace('#', '');
+        const r = parseInt(rgb.slice(0, 2), 16);
+        const g = parseInt(rgb.slice(2, 4), 16);
+        const b = parseInt(rgb.slice(4, 6), 16);
         let opt = {
           content: this.content.find('input').val(),
-          fillStyle: this.fillStyle.find('input').val() || "rgba(184, 184, 184, 0.3)",
+          fillStyle: `rgba(${r}, ${g}, ${b}, ${fillOpacity})`,
           fontSize: parseInt(this.fontSize.find('input').val() || "14") + "px",
           rotate: parseInt(this.rotate.find('input').val() || "25"),
           width: parseInt(this.width.find('input').val() || "200"),
@@ -3748,12 +3769,22 @@ var hiprint = function (t) {
       }, t.prototype.setValue = function (t) {
         this.options = t;
         this.content.find("input").val(t.content || "");
-        this.fillStyle.find("input").val(t.fillStyle || "rgba(184, 184, 184, 0.3)");
-        this.fillStyle.find("input").minicolors({
-          format: "rgb",
-          opacity: true,
-          theme: "bootstrap"
-        });
+        const fillStyle = t.fillStyle || "rgba(184, 184, 184, 0.3)";
+        let color = "#b8b8b8";
+        let opacity = 0.3;
+        const rgbaMatch = /^rgba?\((\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*([\d.]+))?\)$/i.exec(fillStyle);
+        if (rgbaMatch) {
+          const r = parseInt(rgbaMatch[1], 10);
+          const g = parseInt(rgbaMatch[2], 10);
+          const b = parseInt(rgbaMatch[3], 10);
+          opacity = rgbaMatch[4] ? parseFloat(rgbaMatch[4]) : 1;
+          color = "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        } else if (fillStyle.startsWith("#")) {
+          color = fillStyle;
+          opacity = 1;
+        }
+        this.fillStyle.find('input[type="color"]').val(color);
+        this.fillStyle.find('input[type="range"]').val(Math.round(opacity * 100));
         const fontSize = parseInt(t.fontSize || "14");
         this.fontSize.find("input").val(fontSize);
         this.rotate.find("input").val(t.rotate || 25);
@@ -4145,7 +4176,7 @@ var hiprint = function (t) {
         }
         return null;
       }, t.prototype.createTarget = function () {
-        return this.target = $(`<div class="hiprint-option-item">\n        <div class="hiprint-option-item-label">\n        ${i18n.__('边框圆角')}\n        </div>\n        <div class="hiprint-option-item-field">\n        <input type="text" class="auto-submit"/>\n        </div>\n    </div>`), this.target;
+        return this.target = $(`<div class="hiprint-option-item">\n        <div class="hiprint-option-item-label">\n        ${i18n.__('边框圆角')}\n        </div>\n        <div class="hiprint-option-item-field">\n        <input type="number" class="auto-submit"/>\n        </div>\n    </div>`), this.target;
       }, t.prototype.getValue = function () {
         var t = this.target.find("input").val();
         if (t) return t;
@@ -4401,15 +4432,12 @@ var hiprint = function (t) {
 
         return null;
       }, t.prototype.createTarget = function () {
-        return this.target = $(`<div class="hiprint-option-item">\n        <div class="hiprint-option-item-label">\n        ${i18n.__('背景颜色')}\n        </div>\n        <div class="hiprint-option-item-field">\n        <input type="text" class="auto-submit"/>\n        </div>\n    </div>`), this.target;
+        return this.target = $(`<div class="hiprint-option-item">\n        <div class="hiprint-option-item-label">\n        ${i18n.__('背景颜色')}\n        </div>\n        <div class="hiprint-option-item-field">\n        <input type="color" class="auto-submit"/>\n        </div>\n    </div>`), this.target;
       }, t.prototype.getValue = function () {
         var t = this.target.find("input").val();
         if (t) return t.toString();
       }, t.prototype.setValue = function (t) {
-        this.target.find("input").minicolors({
-          defaultValue: t || "",
-          theme: "bootstrap"
-        }), this.target.find("input").val(t);
+        this.target.find("input").val(t || "#000000");
       }, t.prototype.destroy = function () {
         this.target.remove();
       }, t;
@@ -4426,15 +4454,12 @@ var hiprint = function (t) {
           }
           return null;
         }, t.prototype.createTarget = function () {
-          return this.target = $(`<div class="hiprint-option-item">\n        <div class="hiprint-option-item-label">\n        ${i18n.__('条码颜色')}\n        </div>\n        <div class="hiprint-option-item-field">\n        <input type="text" class="auto-submit"/>\n        </div>\n    </div>`), this.target;
+          return this.target = $(`<div class="hiprint-option-item">\n        <div class="hiprint-option-item-label">\n        ${i18n.__('条码颜色')}\n        </div>\n        <div class="hiprint-option-item-field">\n        <input type="color" class="auto-submit"/>\n        </div>\n    </div>`), this.target;
         }, t.prototype.getValue = function () {
           var t = this.target.find("input").val();
           if (t) return t.toString();
         }, t.prototype.setValue = function (t) {
-          this.target.find("input").minicolors({
-            defaultValue: t || "",
-            theme: "bootstrap"
-          }), this.target.find("input").val(t);
+          this.target.find("input").val(t || "#000000");
         }, t.prototype.destroy = function () {
           this.target.remove();
         }, t;
@@ -5964,7 +5989,6 @@ var hiprint = function (t) {
       }, TablePrintElement.prototype.design = function (t, e) {
         var n = this;
         this.designTarget.hidraggable({
-          handle: this.designTarget.find(".hiprint-printElement-table-handle"),
           axis: n.options.axis ? n.options.axis : void 0,
           designTarget: n,
           onDrag: function onDrag(t, i, o) {
@@ -5974,6 +5998,11 @@ var hiprint = function (t) {
           moveUnit: "pt",
           minMove: _HiPrintConfig__WEBPACK_IMPORTED_MODULE_1__.a.instance.movingDistance,
           onBeforeDrag: function onBeforeDrag(t) {
+            // 拖动列/行分隔线（grip）或旋转按钮时，不触发表格整体移动
+            var tgt = t && t.target;
+            if (tgt && tgt.closest && tgt.closest('.columngrip, .rowgrip, .gripResizer')) {
+              return false;
+            }
             _HiPrintlib__WEBPACK_IMPORTED_MODULE_9__.a.instance.draging = !0, n.createLineOfPosition(e);
           },
           getScale: function getScale() {
@@ -7059,17 +7088,28 @@ var hiprint = function (t) {
           var info = o.options.designTarget.options.getRectInfo();
           diffLeft = window.hinnn.pt.toPx(info.diffW), diffTop = window.hinnn.pt.toPx(info.diffH);
         }
-        // 左右
-        if (data.left < 0 - diffLeft) {
-          data.left = 0 - diffLeft
-        } else if (data.left >= paperW - elementW + diffLeft) {
-          data.left = paperW - elementW + diffLeft
+        // 获取偏移约束（fallback 到 HIPRINT_CONFIG.panel.default）
+        var leftOffsetPx = 0, rightOffsetPx = 0, topOffsetPx = 0, bottomOffsetPx = 0;
+        if (o.options.designTarget && o.options.designTarget.panel) {
+          var panel = o.options.designTarget.panel;
+          var cfgDef = (window.HIPRINT_CONFIG && window.HIPRINT_CONFIG.panel && window.HIPRINT_CONFIG.panel.default) || {};
+          // 所有四个偏移统一由 hidraggable 钳位处理
+          leftOffsetPx = window.hinnn.pt.toPx(panel.leftOffset != null ? Number(panel.leftOffset) : (cfgDef.leftOffset != null ? Number(cfgDef.leftOffset) : 0));
+          rightOffsetPx = window.hinnn.pt.toPx(panel.rightOffset != null ? Number(panel.rightOffset) : (cfgDef.rightOffset != null ? Number(cfgDef.rightOffset) : 0));
+          topOffsetPx = window.hinnn.pt.toPx(panel.topOffset != null ? Number(panel.topOffset) : (cfgDef.topOffset != null ? Number(cfgDef.topOffset) : 0));
+          bottomOffsetPx = window.hinnn.pt.toPx(panel.bottomOffset != null ? Number(panel.bottomOffset) : (cfgDef.bottomOffset != null ? Number(cfgDef.bottomOffset) : 0));
         }
-        // 上下
-        if (data.top < 0 - diffTop) {
-          data.top = 0 - diffTop
-        } else if (data.top >= paperH - elementH + diffTop) {
-          data.top = paperH - elementH + diffTop
+        // 左右（含偏移约束）
+        if (data.left < leftOffsetPx - diffLeft) {
+          data.left = leftOffsetPx - diffLeft
+        } else if (data.left >= paperW - elementW - rightOffsetPx + diffLeft) {
+          data.left = paperW - elementW - rightOffsetPx + diffLeft
+        }
+        // 上下（含偏移约束）
+        if (data.top < topOffsetPx - diffTop) {
+          data.top = topOffsetPx - diffTop
+        } else if (data.top >= paperH - elementH - bottomOffsetPx + diffTop) {
+          data.top = paperH - elementH - bottomOffsetPx + diffTop
         }
         i.data = data
       }
@@ -7413,7 +7453,7 @@ var hiprint = function (t) {
           top: 0,
           left: 0,
           position: "absolute",
-          "background-color": "rgba(0,0,0,0.5)",
+          "background-color": "rgba(0,0,0,0.1)",
           cursor: "move",
           display: "none"
         }), e.appendHandler(o, n(this));
@@ -8619,13 +8659,14 @@ var hiprint = function (t) {
           }
         });
       }, t.prototype.resize = function (t, e) {
-        // 获取页脚高度比例
-        var parperFooterRatio = this.paperFooter / this.height;
         this.width = o.a.mm.toPt(t), this.height = o.a.mm.toPt(e), this.mmwidth = t, this.mmheight = e, this.target.css("width", t + "mm"), this.target.css("height", e - p.a.instance.paperHeightTrim + "mm"), this.target.attr("original-height", this.mmheight);
-        // 按比例计算页脚高度
-        var paperFooter = this.height * parperFooterRatio;
-        this.paperFooter = paperFooter || this.height, this.footerLinetarget.css("top", paperFooter + "pt"),
-          this.contentHeight = this.paperFooter - this.paperHeader,
+        // paperFooter 是单页内页尾线位置，不随画布总高度缩放
+        // 只有当 paperFooter 超出新高度时才限制（防止线跑到画布外）
+        if (this.paperFooter > this.height) {
+          this.paperFooter = this.height - 10;
+          this.footerLinetarget.css("top", this.paperFooter + "pt");
+        }
+        this.contentHeight = this.paperFooter - this.paperHeader,
           // 设置纸张后, 页码位置重置问题
           this.paperNumberLeft = this.paperNumberLeft > this.width ? parseInt((this.width - 30).toString()) : this.paperNumberLeft;
         this.paperNumberTop = this.paperNumberTop > this.height ? this.paperNumberTop = parseInt((this.height - 22).toString()) : this.paperNumberTop;
@@ -9691,7 +9732,7 @@ var hiprint = function (t) {
     }(),
     pt = function () {
       function t(t, e) {
-        this.templateId = e, this.index = t.index, this.name = t.name, this.width = t.width, this.height = t.height, this.paperType = t.paperType, this.paperHeader = t.paperHeader, this.paperFooter = t.paperFooter, this.initPrintElements(t.printElements), this.paperNumberLeft = t.paperNumberLeft, this.paperNumberTop = t.paperNumberTop, this.paperNumberDisabled = t.paperNumberDisabled, this.paperNumberContinue = t.paperNumberContinue == void 0 ? true : t.paperNumberContinue, this.paperNumberFormat = t.paperNumberFormat, this.panelPaperRule = t.panelPaperRule, this.panelPageRule = t.panelPageRule, this.firstPaperFooter = t.firstPaperFooter, this.evenPaperFooter = t.evenPaperFooter, this.oddPaperFooter = t.oddPaperFooter, this.lastPaperFooter = t.lastPaperFooter, this.topOffset = t.topOffset, this.leftOffset = t.leftOffset, this.fontFamily = t.fontFamily, this.orient = t.orient, this.target = this.createTarget(), this.rotate = t.rotate, this.scale = t.scale, this.watermarkOptions = t.watermarkOptions || {}, this.panelLayoutOptions = t.panelLayoutOptions || {};
+        this.templateId = e, this.index = t.index, this.name = t.name, this.width = t.width, this.height = t.height, this.paperType = t.paperType, this.paperHeader = t.paperHeader, this.paperFooter = t.paperFooter, this.initPrintElements(t.printElements), this.paperNumberLeft = t.paperNumberLeft, this.paperNumberTop = t.paperNumberTop, this.paperNumberDisabled = t.paperNumberDisabled, this.paperNumberContinue = t.paperNumberContinue == void 0 ? true : t.paperNumberContinue, this.paperNumberFormat = t.paperNumberFormat, this.panelPaperRule = t.panelPaperRule, this.panelPageRule = t.panelPageRule, this.firstPaperFooter = t.firstPaperFooter, this.evenPaperFooter = t.evenPaperFooter, this.oddPaperFooter = t.oddPaperFooter, this.lastPaperFooter = t.lastPaperFooter, this.topOffset = t.topOffset, this.leftOffset = t.leftOffset, this.rightOffset = t.rightOffset, this.bottomOffset = t.bottomOffset, this.fontFamily = t.fontFamily, this.orient = t.orient, this.target = this.createTarget(), this.rotate = t.rotate, this.scale = t.scale, this.watermarkOptions = t.watermarkOptions || {}, this.panelLayoutOptions = t.panelLayoutOptions || {};
       }
 
       return t.prototype.design = function (t) {
@@ -9710,6 +9751,8 @@ var hiprint = function (t) {
             lastPaperFooter: e.lastPaperFooter,
             leftOffset: e.leftOffset,
             topOffset: e.topOffset,
+            rightOffset: e.rightOffset,
+            bottomOffset: e.bottomOffset,
             panelLayoutOptions:e.panelLayoutOptions || {},
             fontFamily: e.fontFamily,
             orient: e.orient,
@@ -9914,17 +9957,34 @@ var hiprint = function (t) {
           l = s.createNewPage(p.length);
           p.push(l);
           a.append(l.getTarget());
+          console.log(`[bundle] 新页面 #${l.index} (panelIdx=${this.index}, panelName=${this.name}), p.length=${p.length}`);
+          // 修复: 新页面的 referenceElement 默认 beginPrintPaperIndex=0/endPrintPaperIndex=0,
+          // 导致后续元素渲染时取 p[endPrintPaperIndex]=p[0], 把元素错误地放到第一页。
+          // 应设置为新页面自己的 index, 让元素渲染到当前新页面。
+          l.updateReferenceElement(new E.a({
+            top: r.paperHeader,
+            left: 0,
+            height: 0,
+            width: 0,
+            bottomInLastPaper: 0,
+            beginPrintPaperIndex: l.index,
+            printTopInPaper: 0,
+            endPrintPaperIndex: l.index
+          }));
         }
         this.printElements.filter(function (t) {
           return !t.isFixed() && !t.isHeaderOrFooter();
         }).forEach(function (e) {
           var n = [],
             i = p[p.length - 1];
+          var _elType = e.printElementType?.type || e.constructor?.name || 'unknown';
+          console.log(`[bundle] 元素 type=${_elType}, top=${e.options?.getTop?.()}, i=page#${i?.index}, i.refElement=[begin=${i?.referenceElement?.beginPrintPaperIndex},end=${i?.referenceElement?.endPrintPaperIndex}]`);
           if (i.referenceElement.isPositionLeftOrRight(e.options.getTop())) {
             l = p[i.referenceElement.beginPrintPaperIndex];
           } else {
             l = p[i.referenceElement.endPrintPaperIndex];
           }
+          console.log(`[bundle] 元素 type=${_elType} -> 分配到 page#${l?.index}`);
           n = e.getHtml(l, t)
           n.forEach(function (t, i) {
             t.referenceElement && (t.referenceElement.endPrintPaperIndex = t.referenceElement.beginPrintPaperIndex + n.length - 1);
@@ -9933,7 +9993,8 @@ var hiprint = function (t) {
                 l = p[l.index + 1];
               } else {
                 l = s.createNewPage(p.length, l.referenceElement);
-                p.push(l)
+                p.push(l);
+                console.log(`[bundle] 元素溢出 -> 新建 page#${l.index}, p.length=${p.length}`);
               }
               a.append(l.getTarget());
             }
@@ -9959,9 +10020,10 @@ var hiprint = function (t) {
           }
         }
         if (!i) {
-          if (this.lastPaperFooter) p[p.length - 1].printLine > this.lastPaperFooter && (l = s.createNewPage(p.length, l.referenceElement), p.push(l), a.append(l.getTarget()));
-          // 这里是处理奇偶页设置
-          this.panelPaperRule && ("odd" == this.panelPaperRule && p.length % 2 == 0 && (l = s.createNewPage(p.length, l.referenceElement), p.push(l), a.append(l.getTarget())), "even" == this.panelPaperRule && p.length % 2 == 1 && (l = s.createNewPage(p.length, l.referenceElement), p.push(l), a.append(l.getTarget())));
+          // 修复: 禁用 post-processing 的额外分页逻辑, 避免多出空白页
+          // (lastPaperFooter 在长文本场景下会误判, panelPaperRule 用户未设置)
+          // if (this.lastPaperFooter) p[p.length - 1].printLine > this.lastPaperFooter && (l = s.createNewPage(p.length, l.referenceElement), p.push(l), a.append(l.getTarget()));
+          // this.panelPaperRule && ("odd" == this.panelPaperRule && p.length % 2 == 0 && (l = s.createNewPage(p.length, l.referenceElement), p.push(l), a.append(l.getTarget())), "even" == this.panelPaperRule && p.length % 2 == 1 && (l = s.createNewPage(p.length, l.referenceElement), p.push(l), a.append(l.getTarget())));
           p.forEach(function (n) {
             n.updatePaperNumber(n.index + 1, p.length, e.paperNumberToggleInEven), r.fillPaperHeaderAndFooter(n, t, p.length), e && (null != e.leftOffset && n.setLeftOffset(e.leftOffset), null != e.topOffset && n.setTopOffset(e.topOffset));
           });

@@ -188,6 +188,27 @@ function clearHighlights() {
   highlightedElements = []
 }
 
+// ── 表格选中效果 ──
+// hiprint 对 noContainer 表格不会创建 .resize-panel，triggerResize 无法添加 selected 类
+// 通过捕获阶段监听 click 手动管理选中态的视觉反馈
+
+function onTableSelect(e: MouseEvent) {
+  const target = e.target as HTMLElement
+  const tableEl = target.closest('.hiprint-printElement-table') as HTMLElement | null
+
+  if (!(e.ctrlKey || e.metaKey)) {
+    designContainerRef.value
+      ?.querySelectorAll('.hiprint-printElement-table.table-selected')
+      .forEach((el) => {
+        if (el !== tableEl) el.classList.remove('table-selected')
+      })
+  }
+
+  if (tableEl) {
+    tableEl.classList.add('table-selected')
+  }
+}
+
 // ── lifecycle ──
 
 onMounted(() => {
@@ -195,10 +216,29 @@ onMounted(() => {
     injectBoundaryLines()
     setupBoundaryObserver()
   })
+
+  // hiprint 内部多处 .focus() 会触发浏览器滚动到中间。
+  // MutationObserver（微任务）可能早于 focus 引起的 scroll 完成，
+  // 因此用 rAF + setTimeout 推迟到下一帧之后强制置顶。
+  const container = designContainerRef.value
+  if (container) {
+    let attempts = 0
+    const forceTop = () => {
+      container.scrollTop = 0
+      if (attempts++ < 5) {
+        requestAnimationFrame(() => setTimeout(forceTop, 50))
+      }
+    }
+    requestAnimationFrame(() => setTimeout(forceTop, 100))
+  }
+
+  // 表格元素选中效果：hiprint 的 triggerResize 对 noContainer 表格不会添加 selected 类
+  designContainerRef.value?.addEventListener('click', onTableSelect, true)
 })
 
 onUnmounted(() => {
   boundaryObserver?.disconnect()
+  designContainerRef.value?.removeEventListener('click', onTableSelect, true)
   document.removeEventListener('mousemove', onMouseMove)
   document.removeEventListener('mouseup', onMouseUp)
 })
@@ -221,6 +261,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
+  overflow-anchor: none;
 }
 
 /* ── 拖拽手柄 ── */
@@ -318,7 +359,6 @@ onUnmounted(() => {
 }
 
 #hiprint-printTemplate table {
-  box-shadow: var(--shadow-paper);
   margin-left: auto !important;
   margin-right: auto !important;
   float: none !important;
@@ -371,20 +411,68 @@ onUnmounted(() => {
   display: none !important;
 }
 
+/* 表格选中效果：hiprint 对 noContainer 表格不会创建 .resize-panel */
+#hiprint-printTemplate .hiprint-printElement-table.table-selected {
+  outline: 2px dashed var(--selection-color, #1890ff);
+  outline-offset: 0px;
+}
+
 /* 防止头尾指示线水平溢出纸张边界 */
 #hiprint-printTemplate .hiprint-printPaper.design {
   overflow: hidden;
 }
 
-/* 表头选中行：白色文字，在深蓝色(#3e66ad)背景上可见 */
+/* 表头选中行：黑色文字，移除深蓝色背景 */
 #hiprint-printTemplate .hitable .selected {
-  color: #fff !important;
+  background: #e9e9e9 !important;
+  color: #000 !important;
 }
 
-/* 表格编辑框：铺满单元格 */
+/* 表格编辑框：绝对定位铺满 td */
+#hiprint-printTemplate .hitable td {
+  position: relative;
+}
 #hiprint-printTemplate .hitable .hitable-editor-text {
-  width: 100% !important;
-  height: 100% !important;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
   box-sizing: border-box;
+}
+
+/* ── 锁定元素：隐藏 resize 控制点 ── */
+#hiprint-printTemplate .hiprint-printElement[data-fixed="true"] .resizebtn,
+#hiprint-printTemplate .resize-panel[data-fixed="true"] .resizebtn {
+  display: none !important;
+}
+
+/* ── 表格边框美化：使用浅灰色替代默认黑色 ── */
+#hiprint-printTemplate .hiprint-printElement-table table {
+  border-color: #d9d9d9 !important;
+}
+#hiprint-printTemplate .hiprint-printElement-table th {
+  border-color: #d9d9d9 !important;
+  color: #000 !important;
+  font-weight: 600 !important;
+}
+#hiprint-printTemplate .hiprint-printElement-table td {
+  border-color: #d9d9d9 !important;
+}
+
+/* 表格整体轻微圆角 + 阴影 */
+#hiprint-printTemplate .hiprint-printElement-table table.hiprint-printElement-tableTarget {
+  border-radius: 2px;
+}
+
+/* 表头浅灰背景 */
+#hiprint-printTemplate .hiprint-printElement-table thead th {
+  background: #f5f5f5 !important;
+}
+
+/* 表格行 hover 效果 */
+#hiprint-printTemplate .hiprint-printElement-table tbody tr:hover td {
+  background: #fafafa;
 }
 </style>

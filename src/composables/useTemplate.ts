@@ -6,8 +6,9 @@ export function useTemplate() {
   function importJSON(jsonStr: string): any {
     try {
       const parsed = JSON.parse(jsonStr)
-      if (!parsed.panels || !Array.isArray(parsed.panels)) {
-        throw new Error('无效的模板格式：缺少 panels 数组')
+      // 接受新旧两种格式：扁平模板 或 panels 包装
+      if (!parsed.paperWidth && (!parsed.panels || !Array.isArray(parsed.panels))) {
+        throw new Error('无效的模板格式')
       }
       return parsed
     } catch (e) {

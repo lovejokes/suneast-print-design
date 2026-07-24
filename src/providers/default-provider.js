@@ -13,12 +13,12 @@ export default function (hiprint) {
           {
             tid: 'defaultModule.image',
             title: '图片',
-            data: '',
+            data: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjkwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMjAiIGhlaWdodD0iOTAiIGZpbGw9IiNmMGYwZjAiIHJ4PSI0Ii8+PHRleHQgeD0iNjAiIHk9IjQ4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjYmJiIiBmb250LXNpemU9IjEyIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiI+5Zu+54mHPC90ZXh0Pjwvc3ZnPg==',
             type: 'image',
           },
           {
             tid: 'defaultModule.longText',
-            title: '长文',
+            title: '文本域',
             data: '长文本内容',
             type: 'longText',
           },
@@ -60,16 +60,9 @@ export default function (hiprint) {
             title: '空白表格',
             type: 'table',
             columns: [[
-              { title: '', field: '', width: 100 },
-              { title: '', field: '', width: 100 },
+              { title: '列一', field: '', width: 100 },
+              { title: '列二', field: '', width: 100 },
             ]],
-          },
-          {
-            tid: 'defaultModule.customText',
-            title: '自定义文本',
-            customText: '自定义文本',
-            custom: true,
-            type: 'text',
           },
         ]),
         new hiprint.PrintElementTypeGroup('辅助', [

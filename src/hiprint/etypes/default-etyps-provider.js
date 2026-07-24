@@ -18,7 +18,7 @@ export default function (hiprint) {
           },
           {
             tid: "defaultModule.longText",
-            title: "长文",
+            title: "文本域",
             data: "155123456789",
             type: "longText"
           },
@@ -84,12 +84,12 @@ export default function (hiprint) {
             columns: [
               [
                 {
-                  title: "",
+                  title: "列一",
                   field: "",
                   width: 100
                 },
                 {
-                  title: "",
+                  title: "列二",
                   field: "",
                   width: 100
                 }
@@ -104,13 +104,6 @@ export default function (hiprint) {
             },
             type: "html"
           },
-          {
-            tid: "defaultModule.customText",
-            title: "自定义文本",
-            customText: "自定义文本",
-            custom: true,
-            type: "text"
-          }
         ]),
         new hiprint.PrintElementTypeGroup("辅助", [
           {

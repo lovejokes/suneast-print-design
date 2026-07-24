@@ -12,12 +12,14 @@
         <a-button type="text" size="small">文件</a-button>
         <template #overlay>
           <a-menu>
-            <a-menu-item @click="$emit('new')">新建模板</a-menu-item>
+            <!-- <a-menu-item @click="$emit('new')">新建模板</a-menu-item> -->
             <a-menu-item @click="$emit('import')">导入 JSON</a-menu-item>
             <a-menu-item @click="$emit('export')">导出 JSON</a-menu-item>
           </a-menu>
         </template>
       </a-dropdown>
+
+      <a-button type="text" size="small" @click="$emit('template')">模板</a-button>
 
       <a-dropdown>
         <a-button type="text" size="small">导出</a-button>
@@ -41,7 +43,7 @@
         :value="paperType"
         size="small"
         style="width: 72px"
-        @change="$emit('update:paperType', $event)"
+        @change="onPaperChange"
       >
         <a-select-option value="A3">A3</a-select-option>
         <a-select-option value="A4">A4</a-select-option>
@@ -51,6 +53,24 @@
         <a-select-option value="B5">B5</a-select-option>
         <a-select-option value="custom">自定义</a-select-option>
       </a-select>
+
+      <a-modal
+        v-model:open="customPaperOpen"
+        title="自定义纸张"
+        :width="280"
+        :footer="null"
+        @cancel="customPaperOpen = false"
+      >
+        <a-form size="small" layout="vertical">
+          <a-form-item label="宽度 (mm)">
+            <a-input-number v-model:value="customWidth" :min="50" :max="1000" style="width:100%" />
+          </a-form-item>
+          <a-form-item label="高度 (mm)">
+            <a-input-number v-model:value="customHeight" :min="50" :max="1000" style="width:100%" />
+          </a-form-item>
+          <a-button type="primary" block @click="confirmCustomPaper">确定</a-button>
+        </a-form>
+      </a-modal>
 
       <span class="tool-sep" />
 
@@ -111,11 +131,30 @@
 
       <span class="tool-sep" />
 
-      <a-tooltip title="网格开关">
-        <a-button type="text" size="small" @click="$emit('toggleGrid')" :class="{ active: gridEnabled }">
-          <GridIcon />
+      <a-tooltip title="清空画布">
+        <a-button type="text" size="small" @click="$emit('clearCanvas')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 18"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
         </a-button>
       </a-tooltip>
+
+      <span class="tool-sep" />
+
+      <a-tooltip title="加高一页">
+        <a-button type="text" size="small" @click="$emit('increaseHeight')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <polyline points="8 15 12 19 16 15"></polyline>
+            <line x1="5" y1="3" x2="19" y2="3"></line>
+          </svg>
+        </a-button>
+      </a-tooltip>
+
+      <a-button type="text" size="small" @click="$emit('preview')">
+        预览
+      </a-button>
     </div>
   </header>
 </template>
@@ -129,22 +168,22 @@ import {
   AlignLeftIcon, AlignCenterIcon, AlignRightIcon,
   AlignTopIcon, AlignMiddleIcon, AlignBottomIcon,
   BringForwardIcon, SendBackwardIcon,
-  GridIcon,
 } from '@/assets/icons'
+import { ref } from 'vue'
 
 defineProps<{
   paperType: string
   zoom: number
-  gridEnabled: boolean
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   new: []
   import: []
   export: []
   print: []
   pdf: []
   'update:paperType': [val: string]
+  customPaper: [width: number, height: number]
   zoomIn: []
   zoomOut: []
   undo: []
@@ -157,8 +196,29 @@ defineEmits<{
   alignBottom: []
   bringForward: []
   sendBackward: []
-  toggleGrid: []
+  preview: []
+  clearCanvas: []
+  increaseHeight: []
+  template: []
+  'update:selectionColor': [color: string]
 }>()
+
+const customPaperOpen = ref(false)
+const customWidth = ref(210)
+const customHeight = ref(297)
+
+function onPaperChange(val: string) {
+  if (val === 'custom') {
+    customPaperOpen.value = true
+  } else {
+    emit('update:paperType', val)
+  }
+}
+
+function confirmCustomPaper() {
+  customPaperOpen.value = false
+  emit('customPaper', customWidth.value, customHeight.value)
+}
 </script>
 
 <style scoped>
@@ -224,7 +284,7 @@ defineEmits<{
 }
 
 .ant-btn-text.active {
-  color: var(--brand-600);
-  background: var(--brand-50);
+  color: inherit;
+  background: transparent;
 }
 </style>

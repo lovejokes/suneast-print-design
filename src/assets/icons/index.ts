@@ -25,6 +25,14 @@ export { default as SaveIcon } from './SaveIcon.vue'
 export { default as PrintIcon } from './PrintIcon.vue'
 export { default as PdfIcon } from './PdfIcon.vue'
 
+export { default as HeaderIcon } from './HeaderIcon.vue'
+export { default as OrderNoIcon } from './OrderNoIcon.vue'
+export { default as CustomerIcon } from './CustomerIcon.vue'
+export { default as DateIcon } from './DateIcon.vue'
+export { default as AmountIcon } from './AmountIcon.vue'
+export { default as SignerIcon } from './SignerIcon.vue'
+export { default as TextAreaIcon } from './TextAreaIcon.vue'
+
 import TextIcon from './TextIcon.vue'
 import ImageIcon from './ImageIcon.vue'
 import TableIcon from './TableIcon.vue'
@@ -34,6 +42,13 @@ import LineIcon from './LineIcon.vue'
 import VLineIcon from './VLineIcon.vue'
 import RectIcon from './RectIcon.vue'
 import OvalIcon from './OvalIcon.vue'
+import HeaderIcon from './HeaderIcon.vue'
+import OrderNoIcon from './OrderNoIcon.vue'
+import CustomerIcon from './CustomerIcon.vue'
+import DateIcon from './DateIcon.vue'
+import AmountIcon from './AmountIcon.vue'
+import SignerIcon from './SignerIcon.vue'
+import TextAreaIcon from './TextAreaIcon.vue'
 import type { Component } from 'vue'
 
 export const elementIcons: Record<string, Component> = {
@@ -46,5 +61,15 @@ export const elementIcons: Record<string, Component> = {
   vline: VLineIcon,
   rect: RectIcon,
   oval: OvalIcon,
-  longText: TextIcon,
+  longText: TextAreaIcon,
+  // Business component icons (by tid)
+  'customModule.header': HeaderIcon,
+  'customModule.orderNo': OrderNoIcon,
+  'customModule.customerName': CustomerIcon,
+  'customModule.date': DateIcon,
+  'customModule.amount': AmountIcon,
+  'customModule.barcode': BarcodeIcon,
+  'customModule.qrcode': QrcodeIcon,
+  'customModule.table': TableIcon,
+  'customModule.signer': SignerIcon,
 }
