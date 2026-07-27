@@ -35,6 +35,8 @@ import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
 const props = defineProps<{
   canvasHeight: number
   paperHeight: number
+  paperHeader?: number
+  paperFooter?: number
 }>()
 
 const emit = defineEmits<{
@@ -341,6 +343,13 @@ onUnmounted(() => {
 </style>
 
 <style>
+/* hiprint 原生页头/页尾辅助线样式覆盖：加粗、变色，使其更明显 */
+#hiprint-printTemplate .hiprint-headerLine,
+#hiprint-printTemplate .hiprint-footerLine {
+  border-top: 1px dashed #9e9e9e !important;
+  opacity: 0.8 !important;
+}
+
 /* hiprint canvas — vertical stacking, horizontal centered */
 #hiprint-printTemplate {
   display: flex !important;

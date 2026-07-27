@@ -39,11 +39,13 @@
 <script setup lang="ts">
 import { ref, computed, watch, onUnmounted, nextTick } from 'vue'
 import { PrintIcon, PdfIcon, ZoomInIcon, ZoomOutIcon } from '@/assets/icons'
+import { splitTallPanels } from '@/utils/splitPanel'
 
 const props = defineProps<{
   open: boolean
   template: object
   data: object
+  paperHeight?: number
 }>()
 
 const emit = defineEmits<{
@@ -78,31 +80,40 @@ function initPreview() {
     const templateCopy = JSON.parse(JSON.stringify(props.template))
     const dataCopy = JSON.parse(JSON.stringify(props.data))
 
+    // 将超高 panel 拆分为标准纸高的多个 panel，使预览呈现多页效果
+    if (props.paperHeight && templateCopy.panels) {
+      templateCopy.panels = splitTallPanels(templateCopy.panels, props.paperHeight)
+    }
+
     const pt = new window.hiprint.PrintTemplate({ template: templateCopy })
     const $ = (window as any).$
 
-    // 续排渲染：后续 panel 基于前一个 panel 的 referenceElement 定位，
-    // 内容流入前一页剩余空间，而不是每个 panel 都另起新页。
-    // 注意：续排 panel 的页眉/页脚填充由首个 panel 统一完成，
-    // 若续排产生新页，新页不会重复填充页眉页脚。
+    // 独立渲染：每个 panel 渲染为自己的页面，不做续排
+    // 这样拆分后的多个 panel 会各自产生独立的 .hiprint-printPaper
     const $result = $('<div class="hiprint-printTemplate"></div>')
-    const sharedPages: any[] = []
     const panels = pt.printPanels || []
 
-    // hiprint 全局页码续排列表在多次渲染间会残留，渲染前清理
-    if ((window as any).hinnn) delete (window as any).hinnn._paperList
+    const allPages: any[] = []
 
-    panels.forEach((panel: any, idx: number) => {
-      const target = panel.getHtml(dataCopy, {}, sharedPages, idx > 0 ? panels[idx - 1] : undefined)
-      // idx > 0 时返回的是前一个 panel 的容器（已在 DOM 中），无需重复 append
-      if (idx === 0 && target) $result.append(target)
+    panels.forEach((panel: any) => {
+      const localPages: any[] = []
+      const target = panel.getHtml(dataCopy, {}, localPages)
+      if (target) $result.append(target)
+      allPages.push(...localPages)
     })
 
-    // 续排模式下后续 panel 跳过了页码最终化，这里统一重排页码
-    sharedPages.forEach((page: any, i: number) => {
-      page.updatePaperNumber?.(i + 1, sharedPages.length)
+    // 统一更新所有页码，避免局部与全局页码不一致
+    // 优先使用 panel.getHtml 返回的 localPages；若为空，则回退到 hiprint 全局 _paperList
+    const paperList = (window as any).hinnn?._paperList || []
+    const pagesToUpdate = allPages.length > 0 ? allPages : paperList
+    pagesToUpdate.forEach((page: any, pi: number) => {
+      page.updatePaperNumber?.(pi + 1, pagesToUpdate.length)
     })
-    if ((window as any).hinnn) delete (window as any).hinnn._paperList
+
+    // 清空 hiprint 全局页码状态，防止下次预览时页码累加
+    if (window.hinnn) {
+      window.hinnn._paperList = []
+    }
 
     const $container = $(previewContent.value)
     $container.empty().append($result)
@@ -116,7 +127,14 @@ function initPreview() {
 
       const contentEl = el.querySelector('.hiprint-printPaper-content') as HTMLElement
       if (contentEl) {
-        contentEl.style.height = 'auto'
+        // 预览时让 contentEl 占满整个 paper，避免 hiprint 默认 offset 把内容推到 paper 外面。
+        // leftOffset/topOffset 的边距效果在打印/导出 PDF 时由 hiprint 自行处理。
+        contentEl.style.top = '0pt'
+        contentEl.style.left = '0pt'
+        contentEl.style.bottom = ''
+        contentEl.style.right = ''
+        contentEl.style.width = '100%'
+        contentEl.style.height = '100%'
         contentEl.style.minHeight = '100%'
         contentEl.style.overflow = 'visible'
       }
@@ -190,14 +208,12 @@ onUnmounted(destroyPreview)
   flex-direction: column;
   align-items: center;
   padding: 20px;
+  gap: 16px;
 }
 
 .preview-content :deep(.hiprint-printPaper) {
   box-shadow: 0 2px 12px rgba(0,0,0,0.15);
-  margin-bottom: 13px;
-}
-.preview-content :deep(.hiprint-printPaper):last-child {
-  margin-bottom: 0;
+  flex-shrink: 0;
 }
 
 /* 页码样式 */
@@ -205,6 +221,11 @@ onUnmounted(destroyPreview)
   font-size: 11px;
   color: #888;
   font-family: Arial, sans-serif;
+  /* 强制页码显示在 paper 右下角，避免 contentEl 高度变化导致被裁剪 */
+  top: auto !important;
+  left: auto !important;
+  right: 12px !important;
+  bottom: 12px !important;
 }
 
 .preview-footer {

@@ -141,10 +141,10 @@ export function useHiprint() {
           if (!els || !els.length) return
           // 取消所有当前选中（普通元素）
           $(containerSelector).find('div[panelindex]').removeClass('selected').css({ display: 'none' })
-          // 取消表格选中
+          // 取消表格选中（.selected 显示 resize 按钮，.table-selected 显示蓝色边框）
           ep.printElements.forEach(function (el: any) {
             if (el && el.designTarget && el.printElementType?.type?.includes('table')) {
-              el.designTarget.removeClass('selected')
+              el.designTarget.removeClass('selected table-selected')
               el.designTarget.find('.resizebtn').css({ display: 'none' })
             }
           })
@@ -153,7 +153,7 @@ export function useHiprint() {
             if (el && el.designTarget) {
               const isTable = el.printElementType?.type?.includes('table') || el.printElementType?.type === 'table'
               if (isTable) {
-                el.designTarget.addClass('selected')
+                el.designTarget.addClass('selected table-selected')
                 el.designTarget.find('.resizebtn').css({ display: '' })
               } else {
                 const rp = el.designTarget.children('div[panelindex]')
@@ -183,6 +183,15 @@ export function useHiprint() {
         const ep = tpl.editingPanel
         if (!ep) return
         const $ = (window as any).$
+        // 焦点在可编辑文本元素上时，不拦截 Ctrl+C / Ctrl+V，让浏览器执行默认文本操作
+        const activeEl = document.activeElement as HTMLElement | null
+        const isEditable = !!activeEl && (
+          activeEl.tagName === 'INPUT' ||
+          activeEl.tagName === 'TEXTAREA' ||
+          activeEl.tagName === 'SELECT' ||
+          activeEl.isContentEditable
+        )
+        if (isEditable) return
         if ((e.ctrlKey || e.metaKey) && e.keyCode === 67) {
           // Ctrl+C: 收集所有选中元素写入 #copyArea（包含表格，含 id/templateId）
           let copyArea = $('#copyArea')
@@ -228,10 +237,45 @@ export function useHiprint() {
           if (copyArea.length && copyArea.text()) {
             e.preventDefault()
             e.stopPropagation()
+            // 先取消所有元素的选中状态
+            deselectAll(ep)
+            // 记录粘贴前的元素数量，用于定位新元素
+            const beforeCount = ep.printElements.length
+            // 解析复制快照，用于粘贴后覆盖 clone 带来的 live 状态
+            let copySnapshots: any[] = []
+            try {
+              copySnapshots = JSON.parse(copyArea.text())
+            } catch { copySnapshots = [] }
             try {
               ep.pasteJson(e)
             } catch {
               manualPaste(ep, tpl)
+            }
+            // 选中新粘贴的元素（pasteJson 新增的在数组末尾），
+            // 并用复制快照覆盖 clone 的浅拷贝，确保粘贴得到的是复制时状态而非实时状态。
+            const afterCount = ep.printElements.length
+            for (let i = beforeCount; i < afterCount; i++) {
+              const newEl = ep.printElements[i]
+              const snap = copySnapshots[i - beforeCount]
+              if (snap?.options && newEl?.options) {
+                // 保留 pasteJson 设置的偏移位置（已 +10）
+                const pasteLeft = newEl.options.getLeft?.()
+                const pasteTop = newEl.options.getTop?.()
+                // 深拷贝快照中的所有属性到新元素
+                const saved = snap.options
+                Object.keys(saved).forEach(function (k) {
+                  try {
+                    newEl.options[k] = JSON.parse(JSON.stringify(saved[k]))
+                  } catch {
+                    newEl.options[k] = saved[k]
+                  }
+                })
+                // 恢复偏移位置
+                if (pasteLeft != null) newEl.options.setLeft?.(pasteLeft)
+                if (pasteTop != null) newEl.options.setTop?.(pasteTop)
+                newEl.updateDesignViewFromOptions?.()
+              }
+              selectElement(newEl)
             }
           }
         }
@@ -253,6 +297,7 @@ export function useHiprint() {
           if (!Array.isArray(copyData) || !copyData.length) return
           const baseLeft = copyData[0].options?.left ?? 100
           const baseTop = copyData[0].options?.top ?? 100
+          const pastedEls: any[] = []
           copyData.forEach(function (item: any, idx: number) {
             const newOptions = JSON.parse(JSON.stringify(item.options))
             newOptions.left = (newOptions.left ?? baseLeft) + 20 * (idx + 1)
@@ -262,6 +307,11 @@ export function useHiprint() {
             if (srcEl && typeof srcEl.clone === 'function') {
               const cloned = srcEl.clone({ options: newOptions, printElementType: item.printElementType })
               if (cloned) {
+                // clone 内部是浅拷贝，需用快照深拷贝覆盖所有属性
+                Object.keys(newOptions).forEach(function (k) {
+                  try { cloned.options[k] = JSON.parse(JSON.stringify(newOptions[k])) }
+                  catch { cloned.options[k] = newOptions[k] }
+                })
                 cloned.options.setLeft?.(newOptions.left)
                 cloned.options.setTop?.(newOptions.top)
                 cloned.setTemplateId?.(ep.templateId)
@@ -269,6 +319,7 @@ export function useHiprint() {
                 ep.appendDesignPrintElement?.(ep.designPaper, cloned, false)
                 ep.printElements?.push?.(cloned)
                 cloned.design?.(void 0, ep.designPaper)
+                pastedEls.push(cloned)
               }
             } else {
               // 降级：通过 PrintElementTypeManager 构建新元素
@@ -283,11 +334,15 @@ export function useHiprint() {
                     ep.appendDesignPrintElement(ep.designPaper, newEl, false)
                     ep.printElements?.push?.(newEl)
                     newEl.design?.(void 0, ep.designPaper)
+                    pastedEls.push(newEl)
                   }
                 }
               }
             }
           })
+          // 取消原有选中，选中新粘贴的元素
+          deselectAll(ep)
+          pastedEls.forEach(function (el: any) { selectElement(el) })
           ;(window as any).hinnn?.event?.trigger('hiprintTemplateDataChanged_' + tpl.id, '粘贴')
         } catch { /* ignore */ }
       }
@@ -311,6 +366,40 @@ export function useHiprint() {
           dels.forEach(function (el: any) { el.delete?.() })
           ;(window as any).hinnn?.event?.trigger('hiprintTemplateDataChanged_' + tpl.id, '删除')
         }
+      }
+
+      // 取消所有元素的选中状态
+      function deselectAll(ep: any) {
+        const $ = (window as any).$
+        ep.printElements.forEach(function (el: any) {
+          try {
+            const isTable = el.printElementType?.type?.includes('table')
+            if (isTable) {
+              el.designTarget?.removeClass?.('selected')
+            } else {
+              const panelDiv = el.designTarget?.children?.('div[panelindex]')
+              if (panelDiv?.length) {
+                panelDiv.removeClass('selected').css({ display: 'none' })
+              }
+            }
+          } catch {}
+        })
+      }
+
+      // 选中指定元素
+      function selectElement(el: any) {
+        const $ = (window as any).$
+        try {
+          const isTable = el.printElementType?.type?.includes('table')
+          if (isTable) {
+            el.designTarget?.addClass?.('selected')
+          } else {
+            const panelDiv = el.designTarget?.children?.('div[panelindex]')
+            if (panelDiv?.length) {
+              panelDiv.addClass('selected').css({ display: 'block' })
+            }
+          }
+        } catch {}
       }
 
       // ── 右键上下文菜单 ──
@@ -496,10 +585,11 @@ export function useHiprint() {
             if (o === 'fixed') {
               this.options.draggable = !v
               if (this.designTarget) {
-                $(this.designTarget).hidraggable('update', { draggable: !v })
+                const $dt = $(this.designTarget)
+                $dt.hidraggable('update', { draggable: !v })
                 // data-fixed 属性用于 CSS 隐藏 resize 控制点
-                this.designTarget.setAttribute('data-fixed', v ? 'true' : 'false')
-                const rp = this.designTarget.querySelector('.resize-panel')
+                $dt.attr('data-fixed', v ? 'true' : 'false')
+                const rp = $dt.find('.resize-panel')[0]
                 if (rp) {
                   rp.setAttribute('data-fixed', v ? 'true' : 'false')
                 }
@@ -553,9 +643,10 @@ export function useHiprint() {
             const shouldDrag = !this.options.fixed && !this.options.coordinateSync
             this.options.draggable = shouldDrag
             if (this.designTarget) {
-              $(this.designTarget).hidraggable('update', { draggable: shouldDrag })
-              this.designTarget.setAttribute('data-fixed', this.options.fixed ? 'true' : 'false')
-              const rp = this.designTarget.querySelector('.resize-panel')
+              const $dt = $(this.designTarget)
+              $dt.hidraggable('update', { draggable: shouldDrag })
+              $dt.attr('data-fixed', this.options.fixed ? 'true' : 'false')
+              const rp = $dt.find('.resize-panel')[0]
               if (rp) {
                 rp.setAttribute('data-fixed', this.options.fixed ? 'true' : 'false')
               }
@@ -912,6 +1003,8 @@ export function useHiprint() {
 
         template.printPanels.forEach((panel: any) => {
           const defaults = (window as any).HIPRINT_CONFIG?.panel?.default
+          panel.leftOffset = panel.leftOffset ?? defaults?.leftOffset ?? 20
+          panel.topOffset = panel.topOffset ?? defaults?.topOffset ?? 20
           panel.rightOffset = panel.rightOffset ?? defaults?.rightOffset ?? 0
           panel.bottomOffset = panel.bottomOffset ?? defaults?.bottomOffset ?? 0
 
@@ -952,6 +1045,25 @@ export function useHiprint() {
 
           hinnn.event.on('PrintElementSelectEventKey_' + template.id, (e: any) => {
             activeElement.value = e.printElement
+          })
+
+          // 拖拽 / 键盘移动 / 缩放 / 旋转后，属性面板输入框仍是旧值，
+          // 需要重新触发选中事件以重建面板、刷新坐标显示。
+          hinnn.event.on('hiprintTemplateDataChanged_' + template.id, (type: string) => {
+            if (
+              type === '移动' || type === '键盘移动' ||
+              type === '大小' || type === '框选移动' || type === '旋转'
+            ) {
+              const el = activeElement.value
+              if (el && el.getPrintElementSelectEventKey) {
+                requestAnimationFrame(() => {
+                  hinnn.event.trigger(
+                    el.getPrintElementSelectEventKey(),
+                    { printElement: el }
+                  )
+                })
+              }
+            }
           })
         }
       }

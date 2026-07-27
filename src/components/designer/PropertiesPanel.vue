@@ -318,6 +318,37 @@ function enhanceColorInputs() {
   })
 }
 
+function setupAutoSubmitInputListener() {
+  const container = document.getElementById('PrintElementOptionSetting')
+  if (!container || (container as any).__autoSubmitPatched) return
+  ;(container as any).__autoSubmitPatched = true
+
+  let timer: ReturnType<typeof setTimeout> | null = null
+
+  // hiprint 绑定的是 change 事件，文本/数字输入框仅在失焦时触发。
+  // 此处通过 input 事件委托，让输入时即触发 change → submitOption，实现修改即时生效。
+  container.addEventListener('input', (e: Event) => {
+    const target = e.target as HTMLElement
+    if (!target || !target.classList.contains('auto-submit')) return
+
+    const tag = target.tagName
+    if (tag === 'INPUT') {
+      const type = (target as HTMLInputElement).type
+      // 仅处理文本类输入；checkbox/color/range 等已即时触发 change
+      if (type !== 'text' && type !== 'number') return
+    } else if (tag !== 'TEXTAREA') {
+      return
+    }
+
+    if (timer) clearTimeout(timer)
+    timer = setTimeout(() => {
+      const jq = (window as any).$
+      if (jq) jq(target).trigger('change')
+      else target.dispatchEvent(new Event('change', { bubbles: true }))
+    }, 200)
+  })
+}
+
 interface GroupConfig {
   title: string
   labels: string[]
@@ -331,6 +362,56 @@ const GROUP_CONFIGS: GroupConfig[] = [
   { title: '页尾设置', labels: ['首页页尾', '尾页页尾', '偶数页页尾', '奇数页页尾'], datasetKey: 'footerGrouped' },
   { title: '对齐方式', labels: ['左右对齐', '上下对齐'], datasetKey: 'alignGrouped' },
 ]
+
+function enhanceFontSizeSelect() {
+  const container = document.getElementById('PrintElementOptionSetting')
+  if (!container) return
+  const allItems = Array.from(container.querySelectorAll<HTMLElement>('.hiprint-option-item'))
+  for (const item of allItems) {
+    if ((item as any).__fontSizeEnhanced) continue
+    const label = item.querySelector('.hiprint-option-item-label')
+    if ((label?.textContent || '').trim() !== '字体大小') continue
+    const select = item.querySelector('select')
+    if (!select) continue
+    ;(item as any).__fontSizeEnhanced = true
+
+    const currentValue = select.value
+    const input = document.createElement('input')
+    input.type = 'number'
+    input.step = '0.75'
+    input.min = '1'
+    input.className = 'auto-submit'
+    input.style.width = '100%'
+    input.value = currentValue || ''
+    input.placeholder = 'pt'
+
+    // 同步: input change -> 更新 select (隐藏) 以保持 hiprint 内部状态一致
+    select.style.display = 'none'
+    select.parentNode?.insertBefore(input, select)
+
+    // input change 时触发 select change，让 hiprint 的 setValue/getValue 正常工作
+    input.addEventListener('change', () => {
+      const v = input.value
+      if (v) {
+        select.value = v
+        // 如果选项不存在，添加一个
+        if (select.value !== v) {
+          const opt = document.createElement('option')
+          opt.value = v
+          opt.text = v
+          select.appendChild(opt)
+          select.value = v
+        }
+      } else {
+        select.value = ''
+      }
+      // 触发 jQuery change，让 hiprint submitOption
+      const jq = (window as any).$
+      if (jq) jq(select).trigger('change')
+      else select.dispatchEvent(new Event('change', { bubbles: true }))
+    })
+  }
+}
 
 function enhanceOptionGroups() {
   const container = document.getElementById('PrintElementOptionSetting')
@@ -398,6 +479,7 @@ onMounted(() => {
     }
     enhanceColorInputs()
     enhanceFieldInputs()
+    enhanceFontSizeSelect()
     enhanceOptionGroups()
     if (moveTimer) clearTimeout(moveTimer)
     moveTimer = setTimeout(moveButtonsToFooter, 50)
@@ -406,8 +488,10 @@ onMounted(() => {
   observer.observe(container, { childList: true, subtree: true })
 
   nextTick(() => {
+    setupAutoSubmitInputListener()
     enhanceColorInputs()
     enhanceFieldInputs()
+    enhanceFontSizeSelect()
     enhanceOptionGroups()
     moveButtonsToFooter()
   })
@@ -417,6 +501,7 @@ watch(() => props.element, () => {
   nextTick(() => {
     enhanceColorInputs()
     enhanceFieldInputs()
+    enhanceFontSizeSelect()
     enhanceOptionGroups()
     if (moveTimer) clearTimeout(moveTimer)
     moveTimer = setTimeout(moveButtonsToFooter, 100)

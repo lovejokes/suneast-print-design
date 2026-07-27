@@ -9,6 +9,7 @@ export interface PanelTemplate {
     width: number
     paperHeader?: number
     paperFooter?: number
+    repeatHeaderFooter?: boolean
     printElements: Array<Record<string, unknown>>
     paperNumberLeft?: number
     paperNumberTop?: number
@@ -24,8 +25,9 @@ const DEFAULT_PANEL: PanelTemplate = {
       name: 1,
       height: 297,
       width: 210,
-      paperHeader: 49.5,
-      paperFooter: 780,
+      paperHeader: 28,
+      paperFooter: 812,
+      repeatHeaderFooter: true,
       printElements: [],
       watermarkOptions: {
         content: '日东打印',
