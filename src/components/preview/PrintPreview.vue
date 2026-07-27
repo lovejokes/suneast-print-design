@@ -127,10 +127,9 @@ function initPreview() {
 
       const contentEl = el.querySelector('.hiprint-printPaper-content') as HTMLElement
       if (contentEl) {
-        // 预览时让 contentEl 占满整个 paper，避免 hiprint 默认 offset 把内容推到 paper 外面。
-        // leftOffset/topOffset 的边距效果在打印/导出 PDF 时由 hiprint 自行处理。
-        contentEl.style.top = '0pt'
-        contentEl.style.left = '0pt'
+        // 保留 hiprint getHtml() 设置的 topOffset/leftOffset，
+        // 不重置为 0pt，否则预览时内容会跑到顶部，忽略上边距。
+        // 纸张 overflow:hidden 会裁剪超出边界的部分。
         contentEl.style.bottom = ''
         contentEl.style.right = ''
         contentEl.style.width = '100%'

@@ -176,6 +176,9 @@ export function useHiprint() {
       }
       document.addEventListener('mouseup', onDocMouseUp, true)
 
+      // ── 剪贴板数据（闭包变量，避免 textarea textContent/value 不一致问题） ──
+      let clipboardData: any[] = []
+
       // ── Ctrl+C / Ctrl+V 快捷键 ──
       function onCopyPasteKeyDown(e: KeyboardEvent) {
         const tpl = hiprintTemplate.value
@@ -193,14 +196,8 @@ export function useHiprint() {
         )
         if (isEditable) return
         if ((e.ctrlKey || e.metaKey) && e.keyCode === 67) {
-          // Ctrl+C: 收集所有选中元素写入 #copyArea（包含表格，含 id/templateId）
-          let copyArea = $('#copyArea')
-          if (!copyArea.length) {
-            copyArea = $('<textarea id="copyArea" style="position:absolute;left:0;top:0;opacity:0"></textarea>')
-            $('body').append(copyArea)
-          }
-          // 清空上一次复制数据
-          copyArea.text('')
+          // Ctrl+C: 收集所有选中元素到闭包变量
+          clipboardData = []
           const selected: any[] = []
           ep.printElements.forEach(function (el: any) {
             try {
@@ -215,68 +212,34 @@ export function useHiprint() {
             } catch {}
           })
           if (selected.length > 0) {
-            // 格式与原生 copyJson 一致：必须包含 id / templateId
-            const copyData = selected.map(function (el: any) {
+            // 深拷贝快照，避免后续修改影响粘贴结果
+            clipboardData = selected.map(function (el: any) {
               return {
                 id: el.id,
                 templateId: el.templateId,
-                options: el.options?.getPrintElementOptionEntity?.() || el.options,
+                options: JSON.parse(JSON.stringify(
+                  el.options?.getPrintElementOptionEntity?.() || el.options
+                )),
                 printElementType: el.printElementType?.getPrintElementTypeEntity?.() || el.printElementType,
               }
             })
-            copyArea.text(JSON.stringify(copyData))
-            copyArea.attr('data-count', String(selected.length))
+            // 同步到 #copyArea，供右键菜单粘贴使用
+            let copyArea = $('#copyArea')
+            if (!copyArea.length) {
+              copyArea = $('<textarea id="copyArea" style="position:absolute;left:0;top:0;opacity:0"></textarea>')
+              $('body').append(copyArea)
+            }
+            copyArea.val(JSON.stringify(clipboardData))
           }
           e.preventDefault()
-          // 阻止冒泡，防止 hiprint 原生 copyJson 覆盖 #copyArea
           e.stopPropagation()
         }
         if ((e.ctrlKey || e.metaKey) && e.keyCode === 86) {
-          // Ctrl+V: 优先使用原生 pasteJson（内部通过 id 定位原元素克隆）
-          const copyArea = $('#copyArea')
-          if (copyArea.length && copyArea.text()) {
+          // Ctrl+V: 使用闭包变量，不依赖 #copyArea 的 text()
+          if (clipboardData.length > 0) {
             e.preventDefault()
             e.stopPropagation()
-            // 先取消所有元素的选中状态
-            deselectAll(ep)
-            // 记录粘贴前的元素数量，用于定位新元素
-            const beforeCount = ep.printElements.length
-            // 解析复制快照，用于粘贴后覆盖 clone 带来的 live 状态
-            let copySnapshots: any[] = []
-            try {
-              copySnapshots = JSON.parse(copyArea.text())
-            } catch { copySnapshots = [] }
-            try {
-              ep.pasteJson(e)
-            } catch {
-              manualPaste(ep, tpl)
-            }
-            // 选中新粘贴的元素（pasteJson 新增的在数组末尾），
-            // 并用复制快照覆盖 clone 的浅拷贝，确保粘贴得到的是复制时状态而非实时状态。
-            const afterCount = ep.printElements.length
-            for (let i = beforeCount; i < afterCount; i++) {
-              const newEl = ep.printElements[i]
-              const snap = copySnapshots[i - beforeCount]
-              if (snap?.options && newEl?.options) {
-                // 保留 pasteJson 设置的偏移位置（已 +10）
-                const pasteLeft = newEl.options.getLeft?.()
-                const pasteTop = newEl.options.getTop?.()
-                // 深拷贝快照中的所有属性到新元素
-                const saved = snap.options
-                Object.keys(saved).forEach(function (k) {
-                  try {
-                    newEl.options[k] = JSON.parse(JSON.stringify(saved[k]))
-                  } catch {
-                    newEl.options[k] = saved[k]
-                  }
-                })
-                // 恢复偏移位置
-                if (pasteLeft != null) newEl.options.setLeft?.(pasteLeft)
-                if (pasteTop != null) newEl.options.setTop?.(pasteTop)
-                newEl.updateDesignViewFromOptions?.()
-              }
-              selectElement(newEl)
-            }
+            manualPaste(ep, tpl)
           }
         }
         // Delete 键删除
@@ -287,14 +250,22 @@ export function useHiprint() {
       }
       document.addEventListener('keydown', onCopyPasteKeyDown, true)
 
-      // 手动粘贴（降级 + 右键菜单调用）
+      // 手动粘贴（Ctrl+V + 右键菜单调用）
       function manualPaste(ep: any, tpl: any) {
-        const $ = (window as any).$
-        const copyArea = $('#copyArea')
-        if (!copyArea.length || !copyArea.text()) return
+        // 优先使用闭包变量；右键菜单时从 #copyArea 降级读取
+        let copyData: any[]
+        if (clipboardData.length > 0) {
+          copyData = clipboardData
+        } else {
+          const $ = (window as any).$
+          const copyArea = $('#copyArea')
+          if (!copyArea.length) return
+          try {
+            copyData = JSON.parse(copyArea.val() || copyArea.text() || '[]')
+          } catch { return }
+        }
+        if (!Array.isArray(copyData) || !copyData.length) return
         try {
-          const copyData = JSON.parse(copyArea.text())
-          if (!Array.isArray(copyData) || !copyData.length) return
           const baseLeft = copyData[0].options?.left ?? 100
           const baseTop = copyData[0].options?.top ?? 100
           const pastedEls: any[] = []

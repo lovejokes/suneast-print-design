@@ -25,8 +25,8 @@ const DEFAULT_PANEL: PanelTemplate = {
       name: 1,
       height: 297,
       width: 210,
-      paperHeader: 28,
-      paperFooter: 812,
+      paperHeader: 20,
+      paperFooter: 822,
       repeatHeaderFooter: true,
       printElements: [],
       watermarkOptions: {
