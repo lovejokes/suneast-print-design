@@ -300,6 +300,10 @@ onUnmounted(() => {
   align-items: center;
   justify-content: flex-start;
   overflow-anchor: none;
+  /* flex item 默认 min-height: auto 会阻止元素小于内容高度，
+     导致内容溢出发生在父容器（被其 overflow:hidden 裁剪）而非本元素，
+     滚动条无法出现 */
+  min-height: 0;
 }
 
 /* ── 拖拽手柄 ── */
@@ -394,11 +398,14 @@ onUnmounted(() => {
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
-  overflow: visible;
+  /* 不能用 visible：会覆盖 .design-container 的 overflow: auto，
+     导致长内容被父容器 .canvas-area 的 overflow: hidden 裁剪而无法滚动 */
+  overflow: auto;
   margin: 0 auto;
   min-width: 100%;
   width: max-content;
   flex-shrink: 0;
+  min-height: 0;
 }
 
 #hiprint-printTemplate .hiprint-printPagination {
@@ -426,6 +433,13 @@ onUnmounted(() => {
 #hiprint-printTemplate .hiprint-printPanel {
   margin: 0 auto;
   overflow: hidden;
+  /* 本元素是 #hiprint-printTemplate（flex column）的 flex item。
+     overflow: hidden 会让 min-height: auto 解析为 0（CSS 规范），
+     默认 flex-shrink: 1 会让 panel 被压缩到比 paper 小，
+     paper 被 overflow:hidden 裁剪，父容器看不到溢出，滚动条不出现。
+     加 flex-shrink: 0 阻止压缩，panel 保持 paper 尺寸，
+     溢出发生在父容器 #hiprint-printTemplate 上，触发其 overflow:auto 滚动条。 */
+  flex-shrink: 0;
 }
 
 /* hover 时去黑色遮罩 */

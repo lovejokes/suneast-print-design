@@ -150,7 +150,7 @@ export function useHiprint() {
           //
           // 注意：不能依赖 data.options.designTarget.panel，因为页眉线/页脚线等
           // 元素在 hidraggable 初始化时不传 designTarget。改用 closest() 从 DOM
-          // 查找纸张元素，从 HIPRINT_CONFIG 全局配置获取偏移值，对所有元素通用。──
+          // 查找纸张元素，偏移值优先取当前编辑面板，fallback 到 HIPRINT_CONFIG 全局默认。
           const paperEl = (e.data.target as HTMLElement)?.closest?.('.hiprint-printPaper.design') as HTMLElement | null
           if (paperEl) {
             const paperW = paperEl.clientWidth
@@ -171,11 +171,12 @@ export function useHiprint() {
             }
             const h = (window as any).hinnn
             const cfgDef = (window as any).HIPRINT_CONFIG?.panel?.default || {}
-            const leftOffsetPx = h?.pt?.toPx?.(Number(cfgDef.leftOffset ?? 0)) ?? 0
-            const rightOffsetPx = h?.pt?.toPx?.(Number(cfgDef.rightOffset ?? 0)) ?? 0
-            const topOffsetPx = h?.pt?.toPx?.(Number(cfgDef.topOffset ?? 0)) ?? 0
-            const bottomOffsetPx = h?.pt?.toPx?.(Number(cfgDef.bottomOffset ?? 0)) ?? 0
-            // 左右边界钳位
+            const panel = data?.options?.designTarget?.panel || hiprintTemplate.value?.editingPanel
+            const leftOffsetPx = h?.pt?.toPx?.(Number(panel?.leftOffset ?? cfgDef.leftOffset ?? 0)) ?? 0
+            const rightOffsetPx = h?.pt?.toPx?.(Number(panel?.rightOffset ?? cfgDef.rightOffset ?? 0)) ?? 0
+            const topOffsetPx = h?.pt?.toPx?.(Number(panel?.topOffset ?? cfgDef.topOffset ?? 0)) ?? 0
+            const bottomOffsetPx = h?.pt?.toPx?.(Number(panel?.bottomOffset ?? cfgDef.bottomOffset ?? 0)) ?? 0
+            // 左右边界钳位（纸张相对坐标，paperContent 的 CSS left 已被 MutationObserver 清除为 0）
             if (e.data.left < leftOffsetPx - diffLeft) {
               e.data.left = leftOffsetPx - diffLeft
             } else if (e.data.left >= paperW - elementW - rightOffsetPx + diffLeft) {

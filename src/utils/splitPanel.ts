@@ -71,7 +71,8 @@ export function splitTallPanels(panels: any[], paperHeight: number): any[] {
         }
       }
 
-      // 正文元素：筛选属于当前页的元素，并调整为页内相对位置
+      // 正文元素：筛选属于当前页的元素，并调整为页内相对位置。
+      // 若元素底部超出 paperFooter 线，裁剪高度避免与页尾区域重叠。
       const pageBodyElements = bodyEls
         .filter((el: any) => {
           const top: number = el.options?.top ?? 0
@@ -82,8 +83,18 @@ export function splitTallPanels(panels: any[], paperHeight: number): any[] {
           if (newEl.options?.top != null) {
             newEl.options.top -= pageTop
           }
+          if (newPaperFooter != null && newEl.options) {
+            const elH = newEl.options.height ?? 0
+            const elBottom = (newEl.options.top ?? 0) + elH
+            if (elBottom > newPaperFooter) {
+              const clippedH = newPaperFooter - (newEl.options.top ?? 0)
+              if (clippedH <= 0) return null
+              newEl.options.height = clippedH
+            }
+          }
           return newEl
         })
+        .filter(Boolean)
 
       // 页眉元素：每页复制一份，top 保持原位置（每个子 panel 顶部都视为页面顶部）
       const pageHeaderElements = headerEls.map((el: any) => JSON.parse(JSON.stringify(el)))
