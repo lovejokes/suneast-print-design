@@ -286,7 +286,7 @@ onUnmounted(() => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: var(--canvas-bg);
+  background: #efefef;
   overflow: hidden;
   position: relative;
 }

@@ -686,7 +686,7 @@ var hiprint = function (t) {
       }, BasePrintElement.prototype.getField = function () {
         return this.options.field || this.printElementType.field;
       }, BasePrintElement.prototype.getTitle = function () {
-        return this.printElementType.title;
+        return this.options.title || "";
       },         BasePrintElement.prototype.updateSizeAndPositionOptions = function (t, e, n, i) {
         const template = _HiPrintlib__WEBPACK_IMPORTED_MODULE_6__.a.instance.getPrintTemplateById(this.templateId)
         if (this.panel !== void 0 && !template.willOutOfBounds) {
@@ -8747,6 +8747,9 @@ var hiprint = function (t) {
 
       return _(e, t), e.prototype.getDesignTarget = function (e) {
         var n = t.prototype.getDesignTarget.call(this, e);
+        if (this.getField()) {
+          n.find(".hiprint-printElement-longText-content").addClass("hiprint-field-bound");
+        }
         return n.find(".hiprint-printElement-longText-content").css("border", "1px dashed #cebcbc"), n;
       }, e.prototype.getProxyTarget = function (t) {
         t && this.SetProxyTargetOption(t);
@@ -8758,13 +8761,20 @@ var hiprint = function (t) {
           var t = this.getData(),
             e = this.getHtml(this.designPaper)[0].target;
           this.designTarget.find(".hiprint-printElement-longText-content").html(e.find(".hiprint-printElement-longText-content").html()), this.css(this.designTarget, t);
+          var contentEl = this.designTarget.find(".hiprint-printElement-longText-content");
+          if (this.getField()) {
+            contentEl.addClass("hiprint-field-bound");
+          } else {
+            contentEl.removeClass("hiprint-field-bound");
+          }
         }
       }, e.prototype.getConfigOptions = function () {
         return p.a.instance.longText;
       }, e.prototype.getTitle = function () {
-        return this.options.title || this.printElementType.title;
+        return this.options.title || "";
       }, e.prototype.getData = function (t) {
         var f = this.getField();
+        if (!t && f) return '@' + f;
         var e = f ? f.split('.').reduce((a, c) => a ? a[c] : t ? t[c] : "", !1) || "" : "";
         return t ? e || "" : this.options.testData || this.printElementType.getData() || "";
       }, e.prototype.updateTargetText = function (t, e, n) {
@@ -8986,7 +8996,11 @@ var hiprint = function (t) {
       }
 
       return H(e, t), e.prototype.getDesignTarget = function (e) {
-        return t.prototype.getDesignTarget.call(this, e);
+        var n = t.prototype.getDesignTarget.call(this, e);
+        if (this.getField()) {
+          n.find(".hiprint-printElement-text-content").addClass("hiprint-field-bound");
+        }
+        return n;
       }, e.prototype.getProxyTarget = function (t) {
         t && this.SetProxyTargetOption(t);
         var e = this.getData(),
@@ -9006,15 +9020,22 @@ var hiprint = function (t) {
         if (this.designTarget) {
           var t = this.getData();
           this.css(this.designTarget, t), this.updateTargetText(this.designTarget, this.getTitle(), t);
+          var contentEl = this.designTarget.find(".hiprint-printElement-text-content");
+          if (this.getField()) {
+            contentEl.addClass("hiprint-field-bound");
+          } else {
+            contentEl.removeClass("hiprint-field-bound");
+          }
         }
       }, e.prototype.getConfigOptions = function () {
         return p.a.instance.text;
       }, e.prototype.getTitle = function () {
-        var t = this.options.title || this.printElementType.title || "";
+        var t = this.options.title || "";
         return t && (t = x.replaceEnterAndNewlineAndTab(t, "")), t;
       }, e.prototype.getData = function (t) {
-        var e = void 0;
         var f = this.getField();
+        if (!t && f) return '@' + f;
+        var e = void 0;
         if (e = t ? f ? f.split('.').reduce((a, c) => a ? a[c] : t ? t[c] : "", !1) || "" : "" : this.options.testData || this.printElementType.getData() || "", this.options.format) {
           if ("datetime" == this.options.dataType) return o.a.dateFormat(e, this.options.format);
 
@@ -9369,7 +9390,7 @@ var hiprint = function (t) {
         t.prototype.onResize.call(this, e, n, i, o, r);
         this.initBarcode(this.designTarget, this.getTitle(), this.getData())
       }, e.prototype.getTitle = function () {
-        return this.options.title || this.printElementType.title;
+        return this.options.title || "";
       }, e.prototype.getData = function (t) {
         var e = void 0;
         var f = this.getField();
@@ -9441,7 +9462,7 @@ var hiprint = function (t) {
         t.prototype.onResize.call(this, e, n, i, o, r);
         this.initQrcode(this.designTarget, this.getTitle(), this.getData())
       }, e.prototype.getTitle = function () {
-        return this.options.title || this.printElementType.title;
+        return this.options.title || "";
       }, e.prototype.getData = function (t) {
         var e = void 0;
         var f = this.getField();
