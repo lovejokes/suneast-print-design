@@ -11,7 +11,7 @@ export default function (hiprint) {
             var opts = el.options
             var element = {
               tid: el.tid,
-              title: el.title,
+              text: el.title,
               type: el.type,
             }
             // 字段元素：画布上显示 @字段名（实际值）

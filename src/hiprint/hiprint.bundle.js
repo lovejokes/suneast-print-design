@@ -8954,7 +8954,7 @@ var hiprint = function (t) {
       }, e.prototype.getTextType = function () {
         return (null == this.textType ? this.defaultOptions.textType : this.textType) || "text";
       }, e.prototype.getFontSize = function () {
-        return (null == this.fontSize ? this.defaultOptions.fontSize : this.fontSize) || 9;
+        return (null == this.fontSize ? this.defaultOptions.fontSize : this.fontSize) || 10;
       }, e.prototype.getbarcodeMode = function () {
         return (null == this.barcodeMode ? this.defaultOptions.barcodeMode : this.barcodeMode) || "CODE128";
       }, e.prototype.getBarTextMode = function () {
@@ -10465,7 +10465,7 @@ var hiprint = function (t) {
                   t.setValue(i.options, i)
                 } else {
                   // options 没有就取 printElementType内的 (如 table 的 footerFormatter)
-                  t.setValue(i.options[t.name] || i.printElementType[t.name])
+                  t.setValue(i.options[t.name] != null ? i.options[t.name] : i.printElementType[t.name])
                 }
               }
               n.find("textarea").bind("dblclick.textarea", function (event) {
@@ -10523,7 +10523,7 @@ var hiprint = function (t) {
                 t.setValue(i.options, i)
               } else {
                 // options 没有就取 printElementType内的 (如 table 的 footerFormatter)
-                t.setValue(i.options[t.name] || i.printElementType[t.name])
+                t.setValue(i.options[t.name] != null ? i.options[t.name] : i.printElementType[t.name])
               }
             }
           });

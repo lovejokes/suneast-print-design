@@ -127,11 +127,6 @@ function initPreview() {
 
       const contentEl = el.querySelector('.hiprint-printPaper-content') as HTMLElement
       if (contentEl) {
-        // 清除 getHtml() 注入的 left/top（setOffset 设置的 CSS 偏移），
-        // 元素坐标已是纸张相对坐标（含 offset），无需二次偏移。
-        // 设计器中 MutationObserver 同样清除了 left/top，保持设计/预览一致。
-        contentEl.style.left = '0pt'
-        contentEl.style.top = '0pt'
         contentEl.style.bottom = ''
         contentEl.style.right = ''
         contentEl.style.width = '100%'

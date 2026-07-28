@@ -96,7 +96,7 @@
   border: 0.75pt none rgb(0, 0, 0);
   direction: ltr;
   font-family: 'SimSun';
-  font-size: 9pt;
+  font-size: 10pt;
   font-style: normal;
   font-weight: normal;
   padding-bottom: 0pt;
@@ -118,10 +118,10 @@
 
 .design .hiprint-printElement-text-content.hiprint-field-bound,
 .design .hiprint-printElement-longText-content.hiprint-field-bound {
-  color: #5b3cc4;
-  font-style: italic;
-  background-color: rgba(91, 60, 196, 0.06);
-  border: 1px dashed #b8a0e8;
+ 
+    font-style: italic;
+    background-color: rgba(76,139,245,.06);
+    border: 1px dashed #90b9fd;
 }
 
 .hiprint-printElement-longText {
@@ -130,7 +130,7 @@
   border: 0.75pt none rgb(0, 0, 0);
   direction: ltr;
   font-family: 'SimSun';
-  font-size: 9pt;
+  font-size: 10pt;
   font-style: normal;
   font-weight: normal;
   padding-bottom: 0pt;

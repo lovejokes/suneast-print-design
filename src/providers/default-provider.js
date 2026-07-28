@@ -6,26 +6,26 @@ export default function (hiprint) {
         new hiprint.PrintElementTypeGroup('常用', [
           {
             tid: 'defaultModule.text',
-            title: '文本',
+            text: '文本',
             data: '',
             type: 'text',
           },
           {
             tid: 'defaultModule.image',
-            title: '图片',
+            text: '图片',
             data: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjkwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMjAiIGhlaWdodD0iOTAiIGZpbGw9IiNmMGYwZjAiIHJ4PSI0Ii8+PHRleHQgeD0iNjAiIHk9IjQ4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjYmJiIiBmb250LXNpemU9IjEyIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiI+5Zu+54mHPC90ZXh0Pjwvc3ZnPg==',
             type: 'image',
           },
           {
             tid: 'defaultModule.longText',
-            title: '文本域',
+            text: '文本域',
             data: '长文本内容',
             type: 'longText',
           },
           {
             tid: 'defaultModule.table',
             field: 'table',
-            title: '表格',
+            text: '表格',
             type: 'table',
             groupFields: ['name'],
             columns: [
@@ -57,7 +57,7 @@ export default function (hiprint) {
           },
           {
             tid: 'defaultModule.emptyTable',
-            title: '空白表格',
+            text: '空白表格',
             type: 'table',
             columns: [[
               { title: '列一', field: '', width: 100 },
@@ -68,32 +68,32 @@ export default function (hiprint) {
         new hiprint.PrintElementTypeGroup('辅助', [
           {
             tid: 'defaultModule.hline',
-            title: '横线',
+            text: '横线',
             type: 'hline',
           },
           {
             tid: 'defaultModule.vline',
-            title: '竖线',
+            text: '竖线',
             type: 'vline',
           },
           {
             tid: 'defaultModule.rect',
-            title: '矩形',
+            text: '矩形',
             type: 'rect',
           },
           {
             tid: 'defaultModule.oval',
-            title: '椭圆',
+            text: '椭圆',
             type: 'oval',
           },
           {
             tid: 'defaultModule.barcode',
-            title: '条形码',
+            text: '条形码',
             type: 'barcode',
           },
           {
             tid: 'defaultModule.qrcode',
-            title: '二维码',
+            text: '二维码',
             type: 'qrcode',
           },
         ]),

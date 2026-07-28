@@ -20,6 +20,7 @@ export function splitTallPanels(panels: any[], paperHeight: number): any[] {
     const paperHeader: number = panel.paperHeader ?? 42
     const paperFooter: number = panel.paperFooter ?? paperHeader + 1
     const repeatHeaderFooter = panel.repeatHeaderFooter !== false
+    const topOffset: number = panel.topOffset ?? 0
 
     // 提前区分：页眉区、正文区、页脚区元素
     const headerEls: any[] = []
@@ -81,8 +82,9 @@ export function splitTallPanels(panels: any[], paperHeight: number): any[] {
         .map((el: any) => {
           const newEl = JSON.parse(JSON.stringify(el))
           if (newEl.options?.top != null) {
-            newEl.options.top -= pageTop
+            newEl.options.top = newEl.options.top - pageTop + topOffset
           }
+  
           if (newPaperFooter != null && newEl.options) {
             const elH = newEl.options.height ?? 0
             const elBottom = (newEl.options.top ?? 0) + elH
@@ -96,8 +98,11 @@ export function splitTallPanels(panels: any[], paperHeight: number): any[] {
         })
         .filter(Boolean)
 
-      // 页眉元素：每页复制一份，top 保持原位置（每个子 panel 顶部都视为页面顶部）
-      const pageHeaderElements = headerEls.map((el: any) => JSON.parse(JSON.stringify(el)))
+      // 页眉元素：每页复制一份，位置加上 leftOffset（top 已在 paperHeader 区域内无需偏移）
+      const pageHeaderElements = headerEls.map((el: any) => {
+        const newEl = JSON.parse(JSON.stringify(el))
+        return newEl
+      })
 
       // 页脚元素：每页复制一份，依据当前页 paperFooter 线重新计算 top。
       // newPaperFooter 已预留页尾区域空间，无需额外钳位。
@@ -106,7 +111,7 @@ export function splitTallPanels(panels: any[], paperHeight: number): any[] {
         const originalTop: number = el.options?.top ?? 0
         const footerOffset = originalTop - paperFooter
         if (newEl.options && newPaperFooter != null) {
-          newEl.options.top = newPaperFooter + footerOffset
+          newEl.options.top = newPaperFooter + footerOffset + topOffset
         }
         return newEl
       })
@@ -118,6 +123,8 @@ export function splitTallPanels(panels: any[], paperHeight: number): any[] {
         height: paperHeight,
         paperHeader,
         paperFooter: newPaperFooter,
+        topOffset: 0,
+        leftOffset: 0,
         printElements: [...pageHeaderElements, ...pageBodyElements, ...pageFooterElements],
       })
     }

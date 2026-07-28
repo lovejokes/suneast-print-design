@@ -62,7 +62,7 @@
     <PrintPreview
       v-model:open="previewOpen"
       :template="store.template"
-      :data="{}"
+      :data="PREVIEW_DATA"
       :paper-height="paperHeight"
     />
 
@@ -80,6 +80,7 @@ import { useDesignerStore } from '@/stores/designer'
 import { useHiprint } from '@/composables/useHiprint'
 import { useTemplate } from '@/composables/useTemplate'
 import { splitTallPanels } from '@/utils/splitPanel'
+import { PREVIEW_DATA } from '@/data/preview-data'
 
 import AppHeader from '@/components/designer/AppHeader.vue'
 import ElementsPanel from '@/components/designer/ElementsPanel.vue'
@@ -152,7 +153,7 @@ function handlePdf() {
       templateCopy.panels = splitTallPanels(templateCopy.panels, paperHeight.value)
     }
     const pt = new (window as any).hiprint.PrintTemplate({ template: templateCopy })
-    pt.toPdf({}, '打印.pdf')
+    pt.toPdf(PREVIEW_DATA, '打印.pdf')
   } catch (e) {
     console.error('导出 PDF 失败', e)
   }
