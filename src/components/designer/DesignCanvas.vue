@@ -41,6 +41,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   resizeCanvas: [newHeight: number]
+  zoom: [direction: 'in' | 'out']
 }>()
 
 const canvasAreaRef = ref<HTMLElement>()
@@ -53,6 +54,11 @@ const previewPages = ref(1)
 let dragStartY = 0
 let dragStartHeight = 0
 let highlightedElements: HTMLElement[] = []
+
+// hiprint 在 onBeforeDrag / selectEnd / mouseRect 等处调用原生 .focus()，
+// 浏览器默认会把焦点元素滚动到视口内，导致拖拽时画布跳到顶部。
+// 对设计容器内的元素强制 preventScroll: true，从源头阻断此行为。
+let origFocus: ((this: HTMLElement, options?: FocusOptions) => void) | null = null
 
 // ── 页面边界线 ──
 
@@ -102,6 +108,15 @@ function setupBoundaryObserver() {
 watch([() => props.canvasHeight, () => props.paperHeight], () => {
   nextTick(injectBoundaryLines)
 })
+
+// ── Ctrl + 滚轮缩放 ──
+
+function onWheel(e: WheelEvent) {
+  if (!e.ctrlKey && !e.metaKey) return
+  e.preventDefault()
+  const direction = e.deltaY < 0 ? 'in' : 'out'
+  emit('zoom', direction)
+}
 
 // ── 拖拽手柄 ──
 
@@ -219,10 +234,22 @@ onMounted(() => {
     setupBoundaryObserver()
   })
 
+  // 安装 focus preventScroll 补丁：设计容器内的元素聚焦时不再触发浏览器滚动
+  const container = designContainerRef.value
+  if (container && !origFocus) {
+    origFocus = HTMLElement.prototype.focus
+    const scope = container
+    HTMLElement.prototype.focus = function (this: HTMLElement, opts?: FocusOptions) {
+      if (scope.contains(this)) {
+        return origFocus!.call(this, { ...opts, preventScroll: true })
+      }
+      return origFocus!.call(this, opts)
+    }
+  }
+
   // hiprint 内部多处 .focus() 会触发浏览器滚动到中间。
   // MutationObserver（微任务）可能早于 focus 引起的 scroll 完成，
   // 因此用 rAF + setTimeout 推迟到下一帧之后强制置顶。
-  const container = designContainerRef.value
   if (container) {
     let attempts = 0
     const forceTop = () => {
@@ -236,11 +263,19 @@ onMounted(() => {
 
   // 表格元素选中效果：hiprint 的 triggerResize 对 noContainer 表格不会添加 selected 类
   designContainerRef.value?.addEventListener('click', onTableSelect, true)
+
+  // Ctrl + 滚轮缩放
+  canvasAreaRef.value?.addEventListener('wheel', onWheel, { passive: false })
 })
 
 onUnmounted(() => {
+  if (origFocus) {
+    HTMLElement.prototype.focus = origFocus
+    origFocus = null
+  }
   boundaryObserver?.disconnect()
   designContainerRef.value?.removeEventListener('click', onTableSelect, true)
+  canvasAreaRef.value?.removeEventListener('wheel', onWheel)
   document.removeEventListener('mousemove', onMouseMove)
   document.removeEventListener('mouseup', onMouseUp)
 })
@@ -263,6 +298,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-start;
   overflow-anchor: none;
 }
 
@@ -343,6 +379,11 @@ onUnmounted(() => {
 </style>
 
 <style>
+/* 隐藏画布左边与顶部的刻度尺 */
+#hiprint-printTemplate .hiprint_rul_wrapper {
+  display: none !important;
+}
+
 /* hiprint 原生页头/页尾辅助线样式覆盖：加粗、变色，使其更明显 */
 #hiprint-printTemplate .hiprint-headerLine,
 #hiprint-printTemplate .hiprint-footerLine {
@@ -355,8 +396,11 @@ onUnmounted(() => {
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
-  overflow-x: hidden;
+  overflow: scroll;
   margin: 0 auto;
+  min-width: 100%;
+  width: max-content;
+  flex-shrink: 0;
 }
 
 #hiprint-printTemplate .hiprint-printPagination {
@@ -377,6 +421,13 @@ onUnmounted(() => {
   background-color: #fff;
   border: 1px dashed rgba(170, 170, 170, 0.7);
   position: relative;
+  margin: 0 auto;
+}
+
+/* hiprint-printPanel 适应内部缩放后的内容，overflow: hidden 约束拖拽不溢出 */
+#hiprint-printTemplate .hiprint-printPanel {
+  margin: 0 auto;
+  overflow: hidden;
 }
 
 /* hover 时去黑色遮罩 */
@@ -426,9 +477,11 @@ onUnmounted(() => {
   outline-offset: 0px;
 }
 
-/* 防止头尾指示线水平溢出纸张边界 */
-#hiprint-printTemplate .hiprint-printPaper.design {
-  overflow: hidden;
+/* 网格线：使用 CSS 变量动态调整，确保缩放时可见 */
+#hiprint-printTemplate .hiprint-printPaper.design.grid {
+  background-image: linear-gradient(90deg, rgba(0, 0, 0, 0.1) 3%, rgba(0, 0, 0, 0) 3%), linear-gradient(360deg, rgba(0, 0, 0, 0.1) 3%, rgba(0, 0, 0, 0) 3%);
+  background-size: var(--grid-size, 5mm) var(--grid-size, 5mm);
+  background-position: left top;
 }
 
 /* 表头选中行：黑色文字，移除深蓝色背景 */

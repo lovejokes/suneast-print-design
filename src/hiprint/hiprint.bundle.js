@@ -8676,10 +8676,11 @@ var hiprint = function (t) {
       }, t.prototype.zoom = function (s) {
         if (s) {
           this.scale = s, this.target.css("transform", "scale(" + s + ")");
-          if (s > 1) {
-            this.target.css("transform-origin", "-" + s + "% -" + s + "%");
-          } else {
+          // 缩小(≤100%)用 top left 原点，放大(>100%)用默认中心缩放
+          if (s <= 1) {
             this.target.css("transform-origin", "0 0");
+          } else {
+            this.target.css("transform-origin", "");
           }
           this.triggerOnPaperBaseInfoChanged("缩放");
         }

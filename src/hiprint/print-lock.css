@@ -28,6 +28,8 @@
   user-select: none;
   overflow-x: hidden;
   overflow: hidden;
+  /* toPdf 用 dom-to-image -> JPEG，JPEG 不支持透明通道，未设背景时透明像素会变黑 */
+  background-color: #fff;
 }
 
 .hiprint-printPaper .hiprint-printPaper-content {

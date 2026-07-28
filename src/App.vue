@@ -23,6 +23,8 @@
       @bring-forward="layer('up')"
       @send-backward="layer('down')"
       @toggle-grid="store.gridEnabled = !store.gridEnabled"
+      @toggle-elements-panel="showElementsPanel = !showElementsPanel"
+      @toggle-properties-panel="showPropertiesPanel = !showPropertiesPanel"
       @preview="handlePrint"
       @clear-canvas="handleClearCanvas"
       @increase-height="handleIncreaseHeight"
@@ -30,7 +32,7 @@
     />
 
     <div class="app-body">
-      <ElementsPanel ref="elementsPanelRef" />
+      <ElementsPanel v-show="showElementsPanel" ref="elementsPanelRef" />
 
       <DesignCanvas
         :canvas-height="canvasHeight"
@@ -38,12 +40,15 @@
         :paper-header="store.template.panels[0]?.paperHeader"
         :paper-footer="store.template.panels[0]?.paperFooter"
         @resize-canvas="onResizeCanvas"
+        @zoom="onCanvasZoom"
       />
 
-      <PropertiesPanel
-        :element="store.selectedElement"
-        @update="onElementUpdate"
-      />
+      <div v-show="showPropertiesPanel" class="properties-panel-wrapper">
+        <PropertiesPanel
+          :element="store.selectedElement"
+          @update="onElementUpdate"
+        />
+      </div>
     </div>
 
     <input
@@ -94,6 +99,8 @@ const elementsPanelRef = ref()
 const fileInputRef = ref<HTMLInputElement>()
 const previewOpen = ref(false)
 const templateModalOpen = ref(false)
+const showElementsPanel = ref(true)
+const showPropertiesPanel = ref(true)
 
 const paperSizes: Record<string, { width: number; height: number }> = {
   A3: { width: 420, height: 297 },
@@ -123,6 +130,11 @@ function zoomIn() {
 function zoomOut() {
   store.setZoom(store.zoom - 0.1)
   setZoom(store.zoom)
+}
+
+/** Ctrl+滚轮缩放 */
+function onCanvasZoom(direction: 'in' | 'out') {
+  direction === 'in' ? zoomIn() : zoomOut()
 }
 
 function handlePrint() {
@@ -505,5 +517,10 @@ onUnmounted(() => {
   flex: 1;
   display: flex;
   overflow: hidden;
+}
+
+.properties-panel-wrapper {
+  display: flex;
+  flex-shrink: 0;
 }
 </style>
