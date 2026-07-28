@@ -144,6 +144,50 @@ export function useHiprint() {
           } else {
             e.data.top = e.data.startTop
           }
+          // ── 边界钳位：死区逻辑修改了 e.data.left/top 后，
+          // hidraggable 原生 _mouseMove 中的钳位（hiprint.bundle.js:7103-7113）已被覆盖，
+          // 需要在死区计算后重新钳位，防止元素拖出面板边界
+          //
+          // 注意：不能依赖 data.options.designTarget.panel，因为页眉线/页脚线等
+          // 元素在 hidraggable 初始化时不传 designTarget。改用 closest() 从 DOM
+          // 查找纸张元素，从 HIPRINT_CONFIG 全局配置获取偏移值，对所有元素通用。──
+          const paperEl = (e.data.target as HTMLElement)?.closest?.('.hiprint-printPaper.design') as HTMLElement | null
+          if (paperEl) {
+            const paperW = paperEl.clientWidth
+            const paperH = paperEl.clientHeight
+            const elementW = (e.data.target as HTMLElement)?.clientWidth || 0
+            const elementH = (e.data.target as HTMLElement)?.clientHeight || 0
+            let diffLeft = 0, diffTop = 0
+            // 处理旋转元素的边界修正
+            if (data?.options?.designTarget?.options?.transform) {
+              try {
+                const h = (window as any).hinnn
+                const info = data.options.designTarget.options.getRectInfo?.()
+                if (info && h) {
+                  diffLeft = h.pt.toPx(info.diffW || 0)
+                  diffTop = h.pt.toPx(info.diffH || 0)
+                }
+              } catch {}
+            }
+            const h = (window as any).hinnn
+            const cfgDef = (window as any).HIPRINT_CONFIG?.panel?.default || {}
+            const leftOffsetPx = h?.pt?.toPx?.(Number(cfgDef.leftOffset ?? 0)) ?? 0
+            const rightOffsetPx = h?.pt?.toPx?.(Number(cfgDef.rightOffset ?? 0)) ?? 0
+            const topOffsetPx = h?.pt?.toPx?.(Number(cfgDef.topOffset ?? 0)) ?? 0
+            const bottomOffsetPx = h?.pt?.toPx?.(Number(cfgDef.bottomOffset ?? 0)) ?? 0
+            // 左右边界钳位
+            if (e.data.left < leftOffsetPx - diffLeft) {
+              e.data.left = leftOffsetPx - diffLeft
+            } else if (e.data.left >= paperW - elementW - rightOffsetPx + diffLeft) {
+              e.data.left = paperW - elementW - rightOffsetPx + diffLeft
+            }
+            // 上下边界钳位
+            if (e.data.top < topOffsetPx - diffTop) {
+              e.data.top = topOffsetPx - diffTop
+            } else if (e.data.top >= paperH - elementH - bottomOffsetPx + diffTop) {
+              e.data.top = paperH - elementH - bottomOffsetPx + diffTop
+            }
+          }
           return false
         }
 

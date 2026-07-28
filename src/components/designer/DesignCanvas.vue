@@ -354,7 +354,7 @@ onUnmounted(() => {
   color: var(--brand-500);
 }
 
-/* ── 拖拽预览线 ── */
+/* ── 拖拽预览线 ── 13 25 30 32 33 */
 .drag-preview-line {
   position: absolute;
   left: 0;
@@ -384,19 +384,17 @@ onUnmounted(() => {
   display: none !important;
 }
 
-/* hiprint 原生页头/页尾辅助线样式覆盖：加粗、变色，使其更明显 */
 #hiprint-printTemplate .hiprint-headerLine,
 #hiprint-printTemplate .hiprint-footerLine {
   border-top: 1px dashed #9e9e9e !important;
   opacity: 0.8 !important;
 }
 
-/* hiprint canvas — vertical stacking, horizontal centered */
 #hiprint-printTemplate {
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
-  overflow: scroll;
+  overflow: visible;
   margin: 0 auto;
   min-width: 100%;
   width: max-content;
