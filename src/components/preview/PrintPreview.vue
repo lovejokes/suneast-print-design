@@ -127,6 +127,10 @@ function initPreview() {
 
       const contentEl = el.querySelector('.hiprint-printPaper-content') as HTMLElement
       if (contentEl) {
+        // getHtml() 会注入 panel 的 leftOffset/topOffset 到 contentEl 的 CSS，
+        // 但设计模式下元素位置已通过钳位包含了 offset，预览时必须清零避免双重偏移
+        contentEl.style.left = '0pt'
+
         contentEl.style.bottom = ''
         contentEl.style.right = ''
         contentEl.style.width = '100%'

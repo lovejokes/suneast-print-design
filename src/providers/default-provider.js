@@ -21,6 +21,9 @@ export default function (hiprint) {
             text: '文本域',
             data: '长文本内容',
             type: 'longText',
+            options: {
+              lineHeight: 15,
+            },
           },
           {
             tid: 'defaultModule.table',

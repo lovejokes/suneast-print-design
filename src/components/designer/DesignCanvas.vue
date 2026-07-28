@@ -485,8 +485,7 @@ onUnmounted(() => {
 
 /* 表格选中效果：hiprint 对 noContainer 表格不会创建 .resize-panel */
 #hiprint-printTemplate .hiprint-printElement-table.table-selected {
-  outline: 2px dashed var(--selection-color, #1890ff);
-  outline-offset: 0px;
+  border: 2px dashed var(--selection-color, #1890ff);
 }
 
 /* 网格线：使用 CSS 变量动态调整，确保缩放时可见 */
@@ -545,8 +544,13 @@ onUnmounted(() => {
   background: #f5f5f5 !important;
 }
 
-/* 表格行 hover 效果 */
-#hiprint-printTemplate .hiprint-printElement-table tbody tr:hover td {
-  background: #fafafa;
+/* 表格行 hover 效果已取消：设计/预览模式下 tbody tr 悬停保持原有样式不变 */
+
+/* 表格空单元格显示字段占位符：<td field="NAME"> → 显示 @NAME */
+#hiprint-printTemplate .hiprint-printElement-table td[field]:not([field=""]):empty::after {
+  content: '@' attr(field);
+  color: #999;
+  font-style: italic;
+  font-size: 11px;
 }
 </style>

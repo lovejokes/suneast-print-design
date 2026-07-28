@@ -129,11 +129,27 @@ export const customElementGroups: CustomElementGroup[] = [
         options: {
           field: 'table',
           fields: [
-            { text: '名称', field: 'NAME' },
+            { text: '商品名称', field: 'NAME' },
             { text: '数量', field: 'SL' },
             { text: '规格', field: 'GG' },
             { text: '单价', field: 'DJ' },
             { text: '金额', field: 'JE' },
+          ],
+          columns: [
+            [
+              { title: '商品名称', field: 'NAME', width: 180 },
+              { title: '数量', field: 'SL', width: 70 },
+              { title: '规格', field: 'GG', width: 80 },
+              { title: '单价(元)', field: 'DJ', width: 85 },
+              { title: '金额(元)', field: 'JE', width: 100 },
+            ],
+          ],
+          tableHeaderRowHeight: 25,
+          tableBodyRowHeight: 25,
+          // 预览示例数据：拖入表格后预览即可看到多行记录
+          testData: [
+            { NAME: '示例商品A', SL: 10, GG: 'L', DJ: 128.00, JE: 1280.00 },
+            { NAME: '示例商品B', SL: 20, GG: 'XL', DJ: 256.00, JE: 5120.00 },
           ],
         },
       },
