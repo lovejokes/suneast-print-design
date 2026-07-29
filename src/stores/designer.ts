@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, reactive } from 'vue'
+import defaultTemplateJson from '../../docs/template.json'
 
 export interface PanelTemplate {
   panels: Array<{
@@ -18,26 +19,7 @@ export interface PanelTemplate {
   }>
 }
 
-const DEFAULT_PANEL: PanelTemplate = {
-  panels: [
-    {
-      index: 0,
-      name: 1,
-      height: 297,
-      width: 210,
-      paperHeader: 20,
-      paperFooter: 822,
-      repeatHeaderFooter: true,
-      printElements: [],
-      watermarkOptions: {
-        content: '日东打印',
-        rotate: 25,
-        timestamp: true,
-        format: 'YYYY-MM-DD HH:mm',
-      },
-    },
-  ],
-}
+const DEFAULT_PANEL: PanelTemplate = defaultTemplateJson as PanelTemplate
 
 export const useDesignerStore = defineStore('designer', () => {
   const template = reactive<PanelTemplate>(JSON.parse(JSON.stringify(DEFAULT_PANEL)))

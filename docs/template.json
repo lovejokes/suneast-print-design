@@ -1,0 +1,2166 @@
+{
+  "panels": [
+    {
+      "index": 0,
+      "name": 1,
+      "height": 891,
+      "width": 210,
+      "paperHeader": 21,
+      "paperFooter": 2481,
+      "printElements": [
+        {
+          "options": {
+            "left": 124.5,
+            "top": 78,
+            "height": 20,
+            "width": 376.5,
+            "title": "日东智能装备科技(深圳)有限公司",
+            "right": 501,
+            "bottom": 53.75,
+            "vCenter": 312.75,
+            "hCenter": 43.75,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "fontFamily": "SimSun",
+            "fontSize": 22,
+            "fontWeight": "bolder",
+            "color": "#000000",
+            "textAlign": "center",
+            "textContentVerticalAlign": "middle",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 124.5,
+            "top": 102,
+            "height": 20,
+            "width": 376.5,
+            "title": "Suneast Intelligent Equipment Technology(ShenZhen) Co.,Ltd",
+            "right": 499.9921875,
+            "bottom": 74.4921875,
+            "vCenter": 311.7421875,
+            "hCenter": 64.4921875,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "textAlign": "center",
+            "draggable": true,
+            "fontSize": 11,
+            "textContentVerticalAlign": "middle",
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 31.5,
+            "top": 72,
+            "height": 40.5,
+            "width": 58.5,
+            "borderColor": "",
+            "right": 86.25,
+            "bottom": 112.5,
+            "vCenter": 57,
+            "hCenter": 92.25,
+            "src": "\thttp://192.168.1.150/images/template/sws.png",
+            "fit": "",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "draggable": true
+          },
+          "printElementType": {
+            "title": "图片",
+            "type": "image"
+          }
+        },
+        {
+          "options": {
+            "left": 100.5,
+            "top": 139.5,
+            "height": 20,
+            "width": 291,
+            "title": "地址：深圳市宝安区福永镇白石厦东区日东工业园G1栋四楼",
+            "right": 282.75,
+            "bottom": 109.25,
+            "vCenter": 191.25,
+            "hCenter": 99.25,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "fontSize": 10,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 417,
+            "top": 139.5,
+            "height": 20,
+            "width": 129,
+            "title": "邮编：518103",
+            "right": 536.25,
+            "bottom": 110,
+            "vCenter": 476.25,
+            "hCenter": 100,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "fontSize": 10,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 99,
+            "top": 157.5,
+            "height": 20,
+            "width": 291,
+            "title": "电话：(0755)27330313 ",
+            "right": 282.75,
+            "bottom": 109.25,
+            "vCenter": 191.25,
+            "hCenter": 99.25,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "fontSize": 10,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 417,
+            "top": 157.5,
+            "height": 20,
+            "width": 139.5,
+            "title": "网址：www.suneast.com.cn",
+            "right": 545.7421875,
+            "bottom": 134.4921875,
+            "vCenter": 481.2421875,
+            "hCenter": 124.4921875,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "fontSize": 10,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 79.38779527559058,
+            "top": 244.5,
+            "height": 51,
+            "width": 436.5,
+            "title": "SALES CONTRACT",
+            "right": 531.75,
+            "bottom": 301.5,
+            "vCenter": 313.5,
+            "hCenter": 276,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "fontSize": 40,
+            "fontWeight": "bolder",
+            "color": "#d99594",
+            "textAlign": "center",
+            "textContentVerticalAlign": "middle",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 100.5,
+            "top": 315,
+            "height": 51,
+            "width": 388.5,
+            "title": "销售合同书",
+            "right": 489,
+            "bottom": 363,
+            "vCenter": 294.75,
+            "hCenter": 337.5,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#d99594",
+            "draggable": true,
+            "fontFamily": "SimSun",
+            "fontSize": 44,
+            "fontWeight": "bolder",
+            "letterSpacing": 6,
+            "textAlign": "center",
+            "textContentVerticalAlign": "middle",
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 97.5,
+            "top": 390,
+            "height": 34.5,
+            "width": 388.5,
+            "title": "诚信·合作·共赢  ",
+            "right": 483.75,
+            "bottom": 421.5,
+            "vCenter": 289.5,
+            "hCenter": 404.25,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#d99594",
+            "draggable": true,
+            "fontFamily": "SimSun",
+            "fontSize": 30,
+            "fontWeight": "bolder",
+            "textAlign": "center",
+            "textContentVerticalAlign": "middle",
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 156,
+            "top": 526.5,
+            "height": 20,
+            "width": 79.5,
+            "title": "合同编号：",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "fontSize": 14,
+            "fontWeight": "bold",
+            "color": "#000000",
+            "textAlign": "justify",
+            "borderBottom": "solid",
+            "draggable": true,
+            "right": 217.5,
+            "bottom": 545,
+            "vCenter": 186.75,
+            "hCenter": 535,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 235.5,
+            "top": 526.5,
+            "height": 20,
+            "width": 199.5,
+            "right": 288.75,
+            "bottom": 636.5,
+            "vCenter": 228.75,
+            "hCenter": 626.5,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "fontSize": 14,
+            "fontWeight": "bold",
+            "color": "#000000",
+            "textAlign": "center",
+            "borderBottom": "solid",
+            "draggable": true,
+            "field": "orderNo",
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 156,
+            "top": 574.5,
+            "height": 20,
+            "width": 79.5,
+            "title": "  买       方：",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "fontSize": 14,
+            "fontWeight": "bold",
+            "color": "#000000",
+            "textAlign": "justify",
+            "borderBottom": "solid",
+            "draggable": true,
+            "right": 213.75,
+            "bottom": 594.5,
+            "vCenter": 183,
+            "hCenter": 584.5,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 235.5,
+            "top": 574.5,
+            "height": 20,
+            "width": 199.5,
+            "right": 427.5,
+            "bottom": 651.5,
+            "vCenter": 327.75,
+            "hCenter": 641.5,
+            "fontSize": 14,
+            "fontWeight": "bold",
+            "color": "#000000",
+            "textAlign": "center",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "borderBottom": "solid",
+            "draggable": true,
+            "field": "shipper",
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 156,
+            "top": 624,
+            "height": 20,
+            "width": 79.5,
+            "title": "  卖       方：",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "fontSize": 14,
+            "fontWeight": "bold",
+            "color": "#000000",
+            "textAlign": "justify",
+            "borderBottom": "solid",
+            "draggable": true,
+            "right": 220.5,
+            "bottom": 642.5,
+            "vCenter": 189.75,
+            "hCenter": 632.5,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 235.5,
+            "top": 624,
+            "height": 20,
+            "width": 199.5,
+            "right": 426,
+            "bottom": 697.25,
+            "vCenter": 326.25,
+            "hCenter": 687.25,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "fontSize": 14,
+            "fontWeight": "bold",
+            "color": "#000000",
+            "textAlign": "center",
+            "borderBottom": "solid",
+            "draggable": true,
+            "field": "signer",
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 22.5,
+            "top": 718.5,
+            "height": 90,
+            "width": 84,
+            "borderColor": "",
+            "right": 111.75,
+            "bottom": 807.75,
+            "vCenter": 66.75,
+            "hCenter": 768.75,
+            "src": "\thttp://192.168.1.150/images/template/%E5%85%AC%E5%8F%B8%E5%85%AC%E4%BC%97%E5%8F%B7%E7%A0%81.jpg",
+            "fit": "",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "draggable": true
+          },
+          "printElementType": {
+            "title": "图片",
+            "type": "image"
+          }
+        },
+        {
+          "options": {
+            "left": 121.5,
+            "top": 723,
+            "height": 85.5,
+            "width": 81,
+            "borderColor": "",
+            "right": 211.5,
+            "bottom": 813,
+            "vCenter": 166.5,
+            "hCenter": 774,
+            "src": "http://192.168.1.150/images/template/%E5%95%86%E5%9F%8E%E5%B0%8F%E7%A8%8B%E5%BA%8F%E7%A0%81.jpg",
+            "fit": "",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "draggable": true
+          },
+          "printElementType": {
+            "title": "图片",
+            "type": "image"
+          }
+        },
+        {
+          "options": {
+            "left": 105.63779527559058,
+            "top": 877.5,
+            "height": 20,
+            "width": 384,
+            "right": 492,
+            "bottom": 891.5,
+            "vCenter": 333.75,
+            "hCenter": 881.5,
+            "field": "supplier",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "fontSize": 19,
+            "color": "#000000",
+            "textAlign": "center",
+            "textContentVerticalAlign": "middle",
+            "draggable": true,
+            "fontWeight": "bold",
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 30,
+            "top": 874.5,
+            "height": 42,
+            "width": 57,
+            "borderColor": "",
+            "right": 82.5,
+            "bottom": 915,
+            "vCenter": 57.75,
+            "hCenter": 896.25,
+            "src": "\thttp://192.168.1.150/images/template/sws.png",
+            "fit": "",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "draggable": true
+          },
+          "printElementType": {
+            "title": "图片",
+            "type": "image"
+          }
+        },
+        {
+          "options": {
+            "left": 105.63779527559058,
+            "top": 903,
+            "height": 20,
+            "width": 384,
+            "right": 537,
+            "bottom": 917,
+            "vCenter": 345,
+            "hCenter": 907,
+            "field": "customerName",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "textAlign": "center",
+            "textContentVerticalAlign": "middle",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 75,
+            "top": 946.5,
+            "height": 20,
+            "width": 246,
+            "title": "地址",
+            "right": 247.5,
+            "bottom": 965,
+            "vCenter": 159.75,
+            "hCenter": 955,
+            "field": "address",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 351,
+            "top": 946.5,
+            "height": 20,
+            "width": 175.5,
+            "title": "邮编",
+            "right": 430.5,
+            "bottom": 1039.25,
+            "vCenter": 342.75,
+            "hCenter": 1029.25,
+            "field": "supplier",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 75,
+            "top": 969,
+            "height": 20,
+            "width": 244.5,
+            "title": "电话",
+            "right": 246.75,
+            "bottom": 993.5,
+            "vCenter": 159,
+            "hCenter": 983.5,
+            "field": "phone",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 351,
+            "top": 968.25,
+            "height": 20,
+            "width": 175.5,
+            "title": "网址：www.suneast.com.cn",
+            "right": 318.99609375,
+            "bottom": 1030.49609375,
+            "vCenter": 231.24609375,
+            "hCenter": 1020.49609375,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 202.38779527559058,
+            "top": 1035,
+            "height": 20,
+            "width": 190.5,
+            "title": "销售合同书",
+            "right": 411,
+            "bottom": 1055,
+            "vCenter": 258,
+            "hCenter": 1045,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "fontSize": 18,
+            "fontWeight": "bolder",
+            "color": "#000000",
+            "textAlign": "center",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 237,
+            "top": 1060.5,
+            "height": 20,
+            "width": 120,
+            "title": "非设备类",
+            "right": 357,
+            "bottom": 1083.5,
+            "vCenter": 297,
+            "hCenter": 1073.5,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "fontSize": 11,
+            "fontWeight": "500",
+            "color": "#000000",
+            "textAlign": "center",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 41.25,
+            "top": 1109.7421875,
+            "height": 20,
+            "width": 45,
+            "title": "买方:",
+            "right": 75.75,
+            "bottom": 1129.7421875,
+            "vCenter": 53.25,
+            "hCenter": 1119.7421875,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "textAlign": "justify",
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 92.25,
+            "top": 1110.4921875,
+            "height": 20,
+            "width": 211.5,
+            "field": "contact",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "right": 288,
+            "bottom": 1130.4921875,
+            "vCenter": 182.25,
+            "hCenter": 1120.4921875,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 41.25,
+            "top": 1134,
+            "height": 20,
+            "width": 45,
+            "title": "卖方:",
+            "right": 78.75,
+            "bottom": 1157,
+            "vCenter": 54,
+            "hCenter": 1147,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "textAlign": "justify",
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 92.25,
+            "top": 1135.5,
+            "height": 20,
+            "width": 211.5,
+            "right": 345,
+            "bottom": 1211,
+            "vCenter": 239.25,
+            "hCenter": 1201,
+            "field": "contact",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 92.25,
+            "top": 1156.5,
+            "height": 20,
+            "width": 211.5,
+            "right": 303.24609375,
+            "bottom": 1199.99609375,
+            "vCenter": 197.49609375,
+            "hCenter": 1189.99609375,
+            "field": "contact",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 41.25,
+            "top": 1179,
+            "height": 20,
+            "width": 45,
+            "title": "币种:",
+            "right": 79.5,
+            "bottom": 1217,
+            "vCenter": 54.75,
+            "hCenter": 1207,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "textAlign": "justify",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 92.25,
+            "top": 1179,
+            "height": 20,
+            "width": 211.5,
+            "right": 291,
+            "bottom": 1256,
+            "vCenter": 185.25,
+            "hCenter": 1246,
+            "field": "amount",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 312,
+            "top": 1110.4921875,
+            "height": 20,
+            "width": 55,
+            "title": "合同编号：",
+            "right": 362.5,
+            "bottom": 1130.4921875,
+            "vCenter": 335,
+            "hCenter": 1120.4921875,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "textAlign": "justify",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 367.5,
+            "top": 1110.5,
+            "height": 20,
+            "width": 201,
+            "right": 344.25,
+            "bottom": 1256.75,
+            "vCenter": 238.5,
+            "hCenter": 1246.75,
+            "field": "supplier",
+            "testData": "7788787",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 312,
+            "top": 1134,
+            "height": 20,
+            "width": 55,
+            "title": "日    期：",
+            "right": 132.75,
+            "bottom": 1289.75,
+            "vCenter": 108,
+            "hCenter": 1279.75,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "textAlign": "justify",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 367.5,
+            "top": 1134,
+            "height": 20,
+            "width": 201,
+            "right": 345.24609375,
+            "bottom": 1289.99609375,
+            "vCenter": 239.49609375,
+            "hCenter": 1279.99609375,
+            "field": "date",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 312,
+            "top": 1156.5,
+            "height": 20,
+            "width": 55,
+            "title": "销 售 员：",
+            "right": 362.5,
+            "bottom": 1185.5,
+            "vCenter": 335,
+            "hCenter": 1175.5,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "textAlign": "justify",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 367.5,
+            "top": 1156.5,
+            "height": 20,
+            "width": 201,
+            "right": 346.2421875,
+            "bottom": 1323.9921875,
+            "vCenter": 240.4921875,
+            "hCenter": 1313.9921875,
+            "field": "contact",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 312,
+            "top": 1179,
+            "height": 20,
+            "width": 55,
+            "title": "报价单号：",
+            "right": 362.5,
+            "bottom": 1217,
+            "vCenter": 335,
+            "hCenter": 1207,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "textAlign": "justify",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 367.5,
+            "top": 1179,
+            "height": 20,
+            "width": 201,
+            "right": 576.75,
+            "bottom": 1254.5,
+            "vCenter": 471,
+            "hCenter": 1244.5,
+            "field": "orderNo",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 28.5,
+            "top": 1258.5,
+            "height": 20,
+            "width": 241.5,
+            "title": "一、合同涉及货物品名、数量、单价、金额：",
+            "right": 146.7421875,
+            "bottom": 1277.75,
+            "vCenter": 86.7421875,
+            "hCenter": 1267.75,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "fontWeight": "bolder",
+            "color": "#000000",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 28.5,
+            "top": 1279.5,
+            "height": 50,
+            "width": 546.7755905511812,
+            "tableHeaderRowHeight": 25,
+            "tableBodyRowHeight": 25,
+            "right": 567,
+            "bottom": 1328.75,
+            "vCenter": 297.75,
+            "hCenter": 1303.75,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "draggable": true,
+            "tableHeaderBackground": "",
+            "columns": [
+              [
+                {
+                  "width": 61.63505341973737,
+                  "title": "物料编号",
+                  "checked": true,
+                  "fixed": false,
+                  "rowspan": 1,
+                  "colspan": 1
+                },
+                {
+                  "width": 41.09003561315824,
+                  "title": "名称",
+                  "checked": true,
+                  "fixed": false,
+                  "rowspan": 1,
+                  "colspan": 1
+                },
+                {
+                  "width": 67.62533823206073,
+                  "title": "规格型号",
+                  "checked": true,
+                  "fixed": false,
+                  "rowspan": 1,
+                  "colspan": 1
+                },
+                {
+                  "width": 60.21032811998713,
+                  "title": "数量",
+                  "checked": true,
+                  "fixed": false,
+                  "rowspan": 1,
+                  "colspan": 1
+                },
+                {
+                  "width": 61.63505341973737,
+                  "title": "单位",
+                  "checked": true,
+                  "fixed": false,
+                  "rowspan": 1,
+                  "colspan": 1
+                },
+                {
+                  "width": 97.3986029348936,
+                  "title": "单价",
+                  "checked": true,
+                  "fixed": false,
+                  "rowspan": 1,
+                  "colspan": 1
+                },
+                {
+                  "width": 71.94725978570165,
+                  "title": "总价",
+                  "checked": true,
+                  "fixed": false,
+                  "rowspan": 1,
+                  "colspan": 1
+                },
+                {
+                  "width": 85.23391902590508,
+                  "title": "保修期",
+                  "checked": true,
+                  "fixed": false,
+                  "rowspan": 1,
+                  "colspan": 1
+                }
+              ]
+            ]
+          },
+          "printElementType": {
+            "title": "空白表格",
+            "type": "table",
+            "editable": true,
+            "columnDisplayEditable": true,
+            "columnDisplayIndexEditable": true,
+            "columnTitleEditable": true,
+            "columnResizable": true,
+            "columnAlignEditable": true,
+            "isEnableEditField": true,
+            "isEnableContextMenu": true,
+            "isEnableInsertRow": true,
+            "isEnableDeleteRow": true,
+            "isEnableInsertColumn": true,
+            "isEnableDeleteColumn": true,
+            "isEnableMergeCell": true
+          }
+        },
+        {
+          "options": {
+            "left": 343.5,
+            "top": 1342.5,
+            "height": 20,
+            "width": 231.77559055118115,
+            "title": "合计",
+            "field": "amount",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "textAlign": "right",
+            "draggable": true,
+            "right": 460.5,
+            "bottom": 1361,
+            "vCenter": 400.5,
+            "hCenter": 1351,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 343.5,
+            "top": 1360.5,
+            "height": 20,
+            "width": 231,
+            "title": "大写（人民币）",
+            "right": 574.5,
+            "bottom": 1385,
+            "vCenter": 459,
+            "hCenter": 1375,
+            "field": "signer",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "textAlign": "right",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 343.5,
+            "top": 1378.5,
+            "height": 20,
+            "width": 231.77559055118115,
+            "title": "最终优惠价（RMB）",
+            "field": "amount",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "textAlign": "right",
+            "draggable": true,
+            "right": 459,
+            "bottom": 1411.25,
+            "vCenter": 399.75,
+            "hCenter": 1401.25,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 28.5,
+            "top": 1423.5,
+            "height": 20,
+            "width": 120,
+            "title": "二、付款条件：",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "fontWeight": "bold",
+            "color": "#000000",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 30,
+            "top": 1443,
+            "height": 42,
+            "width": 545.2755905511812,
+            "backgroundColor": "",
+            "field": "remark",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "lineHeight": 15,
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本域",
+            "type": "longText"
+          }
+        },
+        {
+          "options": {
+            "left": 28.5,
+            "top": 1497,
+            "height": 20,
+            "width": 120,
+            "title": "三、发    票：",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "fontWeight": "bold",
+            "color": "#000000",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 28.5,
+            "top": 1517,
+            "height": 42,
+            "width": 546.7755905511812,
+            "backgroundColor": "",
+            "right": 575.2755905511812,
+            "bottom": 1558.5,
+            "vCenter": 301.8877952755906,
+            "hCenter": 1537.5,
+            "field": "remark",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "lineHeight": 15,
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本域",
+            "type": "longText"
+          }
+        },
+        {
+          "options": {
+            "left": 28.5,
+            "top": 1575,
+            "height": 20,
+            "width": 120,
+            "title": "四、交    货：",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "fontWeight": "bold",
+            "color": "#000000",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 28.5,
+            "top": 1595,
+            "height": 42,
+            "width": 546,
+            "backgroundColor": "",
+            "field": "remark",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "right": 574.5,
+            "bottom": 1636.5,
+            "vCenter": 301.5,
+            "hCenter": 1615.5,
+            "lineHeight": 15,
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本域",
+            "type": "longText"
+          }
+        },
+        {
+          "options": {
+            "left": 30,
+            "top": 1660.5,
+            "height": 20,
+            "width": 120,
+            "title": "五、开    箱：",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "fontWeight": "bold",
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 28.5,
+            "top": 1680.5,
+            "height": 42,
+            "width": 546.7755905511812,
+            "backgroundColor": "",
+            "field": "remark",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "lineHeight": 15,
+            "right": 575.2755905511812,
+            "bottom": 1723.5,
+            "vCenter": 301.8877952755906,
+            "hCenter": 1702.5,
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本域",
+            "type": "longText"
+          }
+        },
+        {
+          "options": {
+            "left": 28.5,
+            "top": 1729.5,
+            "height": 42,
+            "width": 546.7755905511812,
+            "backgroundColor": "",
+            "right": 575.2755905511812,
+            "bottom": 1768.5,
+            "vCenter": 301.8877952755906,
+            "hCenter": 1747.5,
+            "field": "remark",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "lineHeight": 15,
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本域",
+            "type": "longText"
+          }
+        },
+        {
+          "options": {
+            "left": 28.5,
+            "top": 1779,
+            "height": 42,
+            "width": 546.7755905511812,
+            "backgroundColor": "",
+            "right": 567,
+            "bottom": 1813.5,
+            "vCenter": 297.75,
+            "hCenter": 1792.5,
+            "field": "remark",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "lineHeight": 15,
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本域",
+            "type": "longText"
+          }
+        },
+        {
+          "options": {
+            "left": 30,
+            "top": 1839,
+            "height": 20,
+            "width": 120,
+            "title": "六、包    装：",
+            "right": 147.75,
+            "bottom": 1843.25,
+            "vCenter": 87.75,
+            "hCenter": 1833.25,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "fontWeight": "bold",
+            "color": "#000000",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 28.5,
+            "top": 1860.5,
+            "height": 42,
+            "width": 545.2755905511812,
+            "backgroundColor": "",
+            "right": 575.2755905511812,
+            "bottom": 1900.5,
+            "vCenter": 302.6377952755906,
+            "hCenter": 1879.5,
+            "field": "remark",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "lineHeight": 15,
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本域",
+            "type": "longText"
+          }
+        },
+        {
+          "options": {
+            "left": 30.5,
+            "top": 1944.4921875000005,
+            "height": 20,
+            "width": 49.5,
+            "title": "买方：",
+            "right": 79.99219767252605,
+            "bottom": 1964.4921875000005,
+            "vCenter": 55.242197672526046,
+            "hCenter": 1954.4921875000005,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "textAlign": "justify",
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 79.5,
+            "top": 1944.5,
+            "height": 20,
+            "width": 211.5,
+            "field": "shipper",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 30.5,
+            "top": 1970.999959309896,
+            "height": 20,
+            "width": 49.5,
+            "title": "签署人：",
+            "right": 79.99219767252605,
+            "bottom": 1990.999959309896,
+            "vCenter": 55.242197672526046,
+            "hCenter": 1980.999959309896,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "textAlign": "justify",
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 79.5,
+            "top": 1971,
+            "height": 20,
+            "width": 211.5,
+            "right": 345,
+            "bottom": 1211,
+            "vCenter": 239.25,
+            "hCenter": 1201,
+            "field": "signer",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 30.5,
+            "top": 1999.5,
+            "height": 20,
+            "width": 49.5,
+            "title": "盖  章：",
+            "right": 91.9921875,
+            "bottom": 1202.4921875,
+            "vCenter": 67.2421875,
+            "hCenter": 1192.4921875,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "textAlign": "justify",
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 79.5,
+            "top": 1999.5,
+            "height": 20,
+            "width": 211.5,
+            "right": 291,
+            "bottom": 2019.5,
+            "vCenter": 185.25,
+            "hCenter": 2009.5,
+            "field": "signer",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 30.5,
+            "top": 2028.75,
+            "height": 20,
+            "width": 49.5,
+            "title": "电  话：",
+            "right": 77.66668192545572,
+            "bottom": 2043.1667073567712,
+            "vCenter": 52.91668192545573,
+            "hCenter": 2033.1667073567712,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "textAlign": "justify",
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 79.5,
+            "top": 2028.75,
+            "height": 20,
+            "width": 211.5,
+            "right": 291,
+            "bottom": 2048.75,
+            "vCenter": 185.25,
+            "hCenter": 2038.75,
+            "field": "phone",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 303.75,
+            "top": 1944.5,
+            "height": 20,
+            "width": 49.5,
+            "title": "卖  方：",
+            "right": 163.5,
+            "bottom": 1131.5,
+            "vCenter": 103.5,
+            "hCenter": 1121.5,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "textAlign": "justify",
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 353.25,
+            "top": 1944.5,
+            "height": 20,
+            "width": 211.5,
+            "right": 344.25,
+            "bottom": 1256.75,
+            "vCenter": 238.5,
+            "hCenter": 1246.75,
+            "field": "shipper",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 303.75,
+            "top": 1971,
+            "height": 20,
+            "width": 49.5,
+            "title": "签署人：",
+            "right": 350.49998474121094,
+            "bottom": 1992.6666259765625,
+            "vCenter": 325.74998474121094,
+            "hCenter": 1982.6666259765625,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "textAlign": "justify",
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 353.25,
+            "top": 1971,
+            "height": 20,
+            "width": 211.5,
+            "right": 345.24609375,
+            "bottom": 1289.99609375,
+            "vCenter": 239.49609375,
+            "hCenter": 1279.99609375,
+            "field": "signer",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 303.75,
+            "top": 1999.5001220703127,
+            "height": 20,
+            "width": 49.5,
+            "title": "销售员：",
+            "right": 354.7499643961589,
+            "bottom": 2019.5001220703127,
+            "vCenter": 329.9999643961589,
+            "hCenter": 2009.5001220703127,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "textAlign": "justify",
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 353.25,
+            "top": 1999.5,
+            "height": 20,
+            "width": 211.5,
+            "right": 346.2421875,
+            "bottom": 1323.9921875,
+            "vCenter": 240.4921875,
+            "hCenter": 1313.9921875,
+            "field": "customerName",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 303.75,
+            "top": 2028,
+            "height": 20,
+            "width": 49.5,
+            "title": "盖  章：",
+            "right": 354.6666514078776,
+            "bottom": 2048.0000813802085,
+            "vCenter": 329.9166514078776,
+            "hCenter": 2038.0000813802085,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "textAlign": "justify",
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 353.25,
+            "top": 2028.75,
+            "height": 20,
+            "width": 211.5,
+            "right": 576.75,
+            "bottom": 1254.5,
+            "vCenter": 471,
+            "hCenter": 1244.5,
+            "field": "supplier",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 30.5,
+            "top": 2055.75,
+            "height": 20,
+            "width": 49.5,
+            "title": "传  真：",
+            "right": 91.9921875,
+            "bottom": 1202.4921875,
+            "vCenter": 67.2421875,
+            "hCenter": 1192.4921875,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "textAlign": "justify",
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 79.5,
+            "top": 2055.75,
+            "height": 20,
+            "width": 211.5,
+            "right": 303.24609375,
+            "bottom": 1199.99609375,
+            "vCenter": 197.49609375,
+            "hCenter": 1189.99609375,
+            "field": "address",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 30.5,
+            "top": 2085,
+            "height": 20,
+            "width": 49.5,
+            "title": "地  址：",
+            "right": 77.66668192545572,
+            "bottom": 2043.1667073567712,
+            "vCenter": 52.91668192545573,
+            "hCenter": 2033.1667073567712,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "textAlign": "justify",
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 79.5,
+            "top": 2085,
+            "height": 20,
+            "width": 211.5,
+            "right": 291,
+            "bottom": 1256,
+            "vCenter": 185.25,
+            "hCenter": 1246,
+            "field": "address",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 303.75,
+            "top": 2055.7501220703125,
+            "height": 20,
+            "width": 49.5,
+            "title": "户  名：",
+            "right": 353.2500254313151,
+            "bottom": 2075.7501220703125,
+            "vCenter": 328.5000254313151,
+            "hCenter": 2065.7501220703125,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "textAlign": "justify",
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 353.25,
+            "top": 2055.75,
+            "height": 20,
+            "width": 211.5,
+            "right": 346.2421875,
+            "bottom": 1323.9921875,
+            "vCenter": 240.4921875,
+            "hCenter": 1313.9921875,
+            "field": "customerName",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 303.75,
+            "top": 2085,
+            "height": 20,
+            "width": 49.5,
+            "title": "账  号：",
+            "right": 360.75,
+            "bottom": 1254.5,
+            "vCenter": 336,
+            "hCenter": 1244.5,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "textAlign": "justify",
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 353.25,
+            "top": 2085,
+            "height": 20,
+            "width": 211.5,
+            "right": 576.75,
+            "bottom": 1254.5,
+            "vCenter": 471,
+            "hCenter": 1244.5,
+            "field": "orderNo",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 177,
+            "top": 2481,
+            "height": 20,
+            "width": 250.5,
+            "title": "日东科技商城,线上下单,真货源,更实惠",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "fontSize": 9,
+            "color": "#333333",
+            "textAlign": "center",
+            "textContentVerticalAlign": "middle",
+            "draggable": true,
+            "right": 427.5,
+            "bottom": 2509.25,
+            "vCenter": 302.25,
+            "hCenter": 2499.25,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 41.25,
+            "top": 1156.5,
+            "height": 20,
+            "width": 43.5,
+            "title": "卖方:",
+            "right": 79.5,
+            "bottom": 1185.5,
+            "vCenter": 54.75,
+            "hCenter": 1175.5,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "color": "#000000",
+            "draggable": true,
+            "textAlign": "justify",
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "title": "文本",
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 403.5,
+            "top": 2016,
+            "height": 108,
+            "width": 108,
+            "borderColor": "",
+            "src": "\thttp://192.168.1.150/images/template/售后章.png",
+            "fit": "",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "draggable": true,
+            "right": 511.5,
+            "bottom": 2124,
+            "vCenter": 457.5,
+            "hCenter": 2070
+          },
+          "printElementType": {
+            "title": "图片",
+            "type": "image"
+          }
+        }
+      ],
+      "paperNumberContinue": true,
+      "topOffset": 20,
+      "leftOffset": 20,
+      "watermarkOptions": {
+        "content": "日东打印",
+        "rotate": 25,
+        "timestamp": true,
+        "format": "YYYY-MM-DD HH:mm",
+        "fillStyle": "rgba(184, 184, 184, 0.3)",
+        "fontSize": "14px",
+        "width": 200,
+        "height": 200
+      },
+      "panelLayoutOptions": {}
+    }
+  ]
+}
