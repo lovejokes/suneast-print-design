@@ -194,14 +194,20 @@ export function splitTallPanels(panels: any[], paperHeight: number): any[] {
 
     elements.forEach((el: any) => {
       const top: number = el.options?.top ?? 0
+      const elH = parseFloat(el.options?.height) || 20
       if (repeatHeaderFooter) {
         // 与 hiprint isHeaderOrFooter 一致：页眉带为 top < paperHeader
         if (top < paperHeader) {
           headerEls.push(el)
           return
         }
-        // 页尾线只做收集：top >= paperFooter 视为页尾元素
+        // 页尾元素：明确放在页尾线以下
         if (top >= absoluteFooter) {
+          footerEls.push(el)
+          return
+        }
+        // 额外容错：页尾元素被手误抬高，顶部在线内但底部跨线
+        if (top < absoluteFooter && top + elH > absoluteFooter) {
           footerEls.push(el)
           return
         }
@@ -563,7 +569,9 @@ export function splitTallPanels(panels: any[], paperHeight: number): any[] {
         name: result.length + 1,
         height: paperHeight,
         paperHeader,
-        paperFooter: contentFooterLine,
+        // hiprint outerHeight() 少报约 10pt，表格实际渲染后可能穿入页尾区。
+        // 提前一行（约 20pt）截断，让 hiprint 自然把最后一行移到下一页，避免裁剪。
+        paperFooter: contentFooterLine - 20,
         paperNumberTop,
         paperNumberLeft,
         topOffset: originTopOffset,
