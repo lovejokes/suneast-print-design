@@ -202,7 +202,13 @@ export function renderPreviewPages(
         )
         for (const { node, cur } of candidates) {
           if (!hasFlushContinuation) continue
-          node.style.top = `${cur + topOff}pt`
+          // hiprint 表格续页 top = paperHeader，与 handleTextPagination
+          // 的 minTop(=topOffset) 不一致（多了 paperHeader 21pt）。
+          // 此处对齐：表格贴顶元素只留 topOffset，其他元素正常叠加。
+          const isTableFlush =
+            node.classList.contains('hiprint-printElement-table') &&
+            Math.abs(cur - headerLine) < 1
+          node.style.top = isTableFlush ? `${topOff}pt` : `${cur + topOff}pt`
           node.setAttribute('data-top-offset-applied', '1')
         }
       }

@@ -7,9 +7,9 @@
  *
  * 正文溢流边界取页尾元素落在单页上的最上沿（实际页尾占用带），而非页尾线位置。
  *
- * 注意：hiprint 新页 referenceElement.top = paperHeader，且 bottomInLastPaper=0，
- * getBeginPrintTop 对正文会算成 `options.top - paperHeader`。
- * 因此溢流起排必须用 `paperHeader + topOffset`，渲染后才是真正的上偏移。
+ * 注意：hiprint 新页 referenceElement 初始 top=0（非 paperHeader），
+ * getBeginPrintTop 对续页正文会直接取 options.top。
+ * 溢流起排设为 paperHeader 即可，content.top 会单独叠加 topOffset。
  */
 
 import { sealFakeTableTopBordersOnElements } from '@/utils/tableLayout'
@@ -184,9 +184,10 @@ export function splitTallPanels(panels: any[], paperHeight: number): any[] {
     // 仅用于归类页尾元素，不参与页尾定位
     const absoluteFooter: number = panel.paperFooter ?? paperHeader + 1
     const repeatHeaderFooter = panel.repeatHeaderFooter !== false
-    const topOffset: number = Number(panel.topOffset ?? 0) || 0
-    // 写入 options.top；经 hiprint reference 换算后视觉 top ≈ topOffset
-    const overflowStartTop = paperHeader + topOffset
+    // hiprint 新页 referenceElement 初始 top=0，
+    // getBeginPrintTop 直接返回 options.top（不扣 paperHeader），
+    // 续页元素只需设 paperHeader，content.top 会叠加 topOffset 到正确位置。
+    const overflowStartTop = paperHeader
 
     const headerEls: any[] = []
     const footerEls: any[] = []
@@ -334,11 +335,6 @@ export function splitTallPanels(panels: any[], paperHeight: number): any[] {
             // 整链带偏，而 fixed 矩形仍绝对定位 → 预览里像「改标题带动了固定框」
             if (pageIndex > 0 && top < overflowStartTop) top = overflowStartTop
           } else {
-            top = overflowStartTop
-          }
-          // 续页：正文贴上偏移起排。否则会把「相对该设计页纸顶的空白」
-          // 整段带到预览（假表格/表格续行下方再分页时顶上出现大块空白）。
-          if (pageIndex > 0) {
             top = overflowStartTop
           }
           started = true
