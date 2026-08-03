@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, reactive } from 'vue'
-import defaultTemplateJson from '../../docs/template.json'
+import defaultTemplateJson from '../../docs/templates/sales-contract.json'
 
 export interface PanelTemplate {
   panels: Array<{
@@ -14,7 +14,6 @@ export interface PanelTemplate {
     printElements: Array<Record<string, unknown>>
     paperNumberLeft?: number
     paperNumberTop?: number
-    paperNumberContinue?: boolean
     watermarkOptions?: Record<string, unknown>
   }>
 }
@@ -28,8 +27,6 @@ export const useDesignerStore = defineStore('designer', () => {
   const currentPage = ref(0)
   const gridEnabled = ref(true)
   const paperType = ref('A4')
-  const historyStack = ref<PanelTemplate[]>([])
-  const historyIndex = ref(-1)
 
   function selectElement(el: Record<string, unknown> | null) {
     selectedElement.value = el
@@ -73,27 +70,6 @@ export const useDesignerStore = defineStore('designer', () => {
     template.panels[currentPage.value].printElements = []
   }
 
-  function pushHistory() {
-    const snapshot = JSON.parse(JSON.stringify(template))
-    historyStack.value = historyStack.value.slice(0, historyIndex.value + 1)
-    historyStack.value.push(snapshot)
-    historyIndex.value = historyStack.value.length - 1
-  }
-
-  function undo() {
-    if (historyIndex.value > 0) {
-      historyIndex.value--
-      Object.assign(template, JSON.parse(JSON.stringify(historyStack.value[historyIndex.value])))
-    }
-  }
-
-  function redo() {
-    if (historyIndex.value < historyStack.value.length - 1) {
-      historyIndex.value++
-      Object.assign(template, JSON.parse(JSON.stringify(historyStack.value[historyIndex.value])))
-    }
-  }
-
   function importTemplate(json: PanelTemplate) {
     Object.assign(template, JSON.parse(JSON.stringify(json)))
     currentPage.value = 0
@@ -107,8 +83,6 @@ export const useDesignerStore = defineStore('designer', () => {
     Object.assign(template, JSON.parse(JSON.stringify(DEFAULT_PANEL)))
     currentPage.value = 0
     selectedElement.value = null
-    historyStack.value = []
-    historyIndex.value = -1
   }
 
   return {
@@ -118,8 +92,6 @@ export const useDesignerStore = defineStore('designer', () => {
     currentPage,
     gridEnabled,
     paperType,
-    historyStack,
-    historyIndex,
     selectElement,
     setZoom,
     setPaperType,
@@ -127,9 +99,6 @@ export const useDesignerStore = defineStore('designer', () => {
     removePage,
     setCurrentPage,
     clearPaper,
-    pushHistory,
-    undo,
-    redo,
     importTemplate,
     exportTemplate,
     newTemplate,

@@ -1,6 +1,11 @@
 <template>
   <aside class="properties-panel">
-    <div class="panel-header">属性设置</div>
+    <div class="panel-header">
+      <span>属性设置</span>
+      <span v-if="selectedCount > 1" class="multi-select-hint">
+        已选 {{ selectedCount }} 项，修改将同步
+      </span>
+    </div>
     <div id="PrintElementOptionSetting" class="settings-container"></div>
     <div v-if="!element" class="panel-empty-overlay">
       <p>请在画布中选择</p>
@@ -19,7 +24,7 @@
   >
     <div class="field-selector-category">
       <div class="field-selector-category-title">
-        {{ fieldSelector.isTable ? '表格字段' : '表单字段' }}
+        {{ FIELD_KIND_META[fieldSelector.kind].title }}
       </div>
       <div class="field-selector-list">
         <div
@@ -54,12 +59,29 @@ const props = defineProps<{
 }>()
 
 const footerRef = ref<HTMLElement>()
+const selectedCount = ref(0)
 
 let observer: MutationObserver | null = null
-let moveTimer: ReturnType<typeof setTimeout> | null = null
+
+function refreshSelectedCount() {
+  const root = document.getElementById('hiprint-printTemplate')
+  if (!root) {
+    selectedCount.value = 0
+    return
+  }
+  let n = 0
+  root.querySelectorAll('div[panelindex].selected').forEach(() => {
+    n += 1
+  })
+  root.querySelectorAll('.hiprint-printElement-table.selected').forEach(() => {
+    n += 1
+  })
+  selectedCount.value = n
+}
 
 // ── 字段选择器 ──
 
+/** 普通文本/表单元素绑定的标量字段 */
 const FORM_FIELDS = [
   { name: '订单编号', field: 'orderNo', testData: 'XS888888888' },
   { name: '日期', field: 'date', testData: '2023-07-16' },
@@ -75,7 +97,15 @@ const FORM_FIELDS = [
   { name: '电话', field: 'phone', testData: '电话' },
 ]
 
-const TABLE_FIELDS = [
+/** 表格元素自身绑定的数据源（渲染时先取 data[table] 行数组） */
+const TABLE_DATA_FIELDS = [
+  { name: '明细表', field: 'table', testData: '' },
+  { name: '明细表1', field: 'table1', testData: '' },
+  { name: '明细表2', field: 'table2', testData: '' },
+]
+
+/** 表格列绑定的行内字段（在已选定的 table 数组行上取值） */
+const TABLE_COLUMN_FIELDS = [
   { name: '商品名称', field: 'NAME', testData: '商品名称' },
   { name: '数量', field: 'SL', testData: '数量' },
   { name: '规格', field: 'GG', testData: '规格' },
@@ -88,22 +118,48 @@ const TABLE_FIELDS = [
   { name: '仓位', field: 'LOCATION', testData: '仓位' },
 ]
 
+type FieldKind = 'form' | 'tableData' | 'tableColumn'
+
 interface FieldItem {
   name: string
   field: string
   testData: string
 }
 
+const FIELD_KIND_META: Record<FieldKind, { title: string; fields: FieldItem[] }> = {
+  form: { title: '表单字段', fields: FORM_FIELDS },
+  tableData: { title: '表格数据源', fields: TABLE_DATA_FIELDS },
+  tableColumn: { title: '列字段', fields: TABLE_COLUMN_FIELDS },
+}
+
+function resolveFieldKind(item: HTMLElement, container: HTMLElement): FieldKind {
+  const hostPanel = item.closest('.hiprint-option-items') as HTMLElement | null
+  const panelTitle = (hostPanel?.getAttribute('data-title') || '').trim()
+  // 「列」页签 / 列属性面板 → 列字段
+  if (
+    panelTitle === '列' ||
+    hostPanel?.querySelector('.hiprint-option-title')
+  ) {
+    return 'tableColumn'
+  }
+  // 有「列」页签但当前字段在基础等页 → 表格数据源（table / table1）
+  const hasColumnTab = Array.from(
+    container.querySelectorAll('.prop-tab-item'),
+  ).some((tab) => (tab.textContent || '').trim() === '列')
+  if (hasColumnTab) return 'tableData'
+  return 'form'
+}
+
 const fieldSelector = ref<{
   open: boolean
-  isTable: boolean
+  kind: FieldKind
   fields: FieldItem[]
   selected: string
   targetInput: HTMLInputElement | HTMLSelectElement | null
   displayInput: HTMLInputElement | null
 }>({
   open: false,
-  isTable: false,
+  kind: 'form',
   fields: [],
   selected: '',
   targetInput: null,
@@ -111,7 +167,7 @@ const fieldSelector = ref<{
 })
 
 function confirmFieldSelect() {
-  const { targetInput, displayInput, selected, fields } = fieldSelector.value
+  const { targetInput, displayInput, selected, fields, kind } = fieldSelector.value
   if (!targetInput || !displayInput || !selected) {
     fieldSelector.value.open = false
     return
@@ -119,6 +175,17 @@ function confirmFieldSelect() {
 
   const match = fields.find((f) => f.field === selected)
   ;(targetInput as HTMLInputElement).value = selected
+  // select 需同步 option
+  if (targetInput.tagName === 'SELECT') {
+    const sel = targetInput as HTMLSelectElement
+    if (![...sel.options].some((o) => o.value === selected)) {
+      const opt = document.createElement('option')
+      opt.value = selected
+      opt.textContent = match ? match.name : selected
+      sel.prepend(opt)
+    }
+    sel.value = selected
+  }
   displayInput.value = match ? `${match.name}|${match.field}` : selected
 
   const jq = (window as any).$
@@ -127,10 +194,14 @@ function confirmFieldSelect() {
   } else {
     targetInput.dispatchEvent(new Event('change', { bubbles: true }))
   }
-  // 同步更新画布显示为 @字段名（实际值）
-  if (match) {
+
+  if (kind === 'tableData') {
+    // 直接写入表格元素 field（getSelectEls 不含表格，走选中表元素）
+    emit('update', { field: selected })
+  } else if (kind === 'form' && match) {
     emit('update', { data: '@' + match.field + '（' + (match.testData || '') + '）' })
   }
+  // tableColumn：仅 change → 列 callback，不写表格 options
 
   fieldSelector.value.open = false
 }
@@ -145,6 +216,8 @@ function enhanceFieldInputs() {
   allItems.forEach((item) => {
     const label = item.querySelector('.hiprint-option-item-label')
     if (!label || (label.textContent || '').trim() !== '字段名') return
+    // 列属性标题行也带 label，跳过
+    if (label.classList.contains('hiprint-option-title')) return
 
     item.setAttribute('data-field-enhanced', '1')
 
@@ -154,11 +227,8 @@ function enhanceFieldInputs() {
     const originalInput = fieldEl.querySelector('input, select') as HTMLInputElement | HTMLSelectElement | null
     if (!originalInput) return
 
-    const tabs = container.querySelectorAll('.prop-tab-item')
-    let isTable = false
-    tabs.forEach((tab) => {
-      if ((tab.textContent || '').trim() === '列') isTable = true
-    })
+    const kind = resolveFieldKind(item, container)
+    const { fields } = FIELD_KIND_META[kind]
 
     originalInput.style.display = 'none'
 
@@ -169,11 +239,11 @@ function enhanceFieldInputs() {
     displayInput.type = 'text'
     displayInput.readOnly = true
     displayInput.className = 'field-selector-display'
-    displayInput.placeholder = '点击选择字段'
+    displayInput.placeholder =
+      kind === 'tableData' ? '选择表格数据源' : '点击选择字段'
 
     const currentVal = (originalInput as HTMLInputElement).value
     if (currentVal) {
-      const fields = isTable ? TABLE_FIELDS : FORM_FIELDS
       const match = fields.find((f) => f.field === currentVal)
       displayInput.value = match ? `${match.name}|${match.field}` : currentVal
     }
@@ -185,11 +255,10 @@ function enhanceFieldInputs() {
     selectBtn.addEventListener('click', (e) => {
       e.preventDefault()
       e.stopPropagation()
-      const fields = isTable ? TABLE_FIELDS : FORM_FIELDS
       const cur = (originalInput as HTMLInputElement).value
       fieldSelector.value = {
         open: true,
-        isTable,
+        kind,
         fields,
         selected: cur || '',
         targetInput: originalInput,
@@ -203,24 +272,20 @@ function enhanceFieldInputs() {
   })
 }
 
-function findButtons(container: HTMLElement): { submitBtn: HTMLElement | null; deleteBtn: HTMLElement | null } {
+function findSubmitButton(container: HTMLElement): HTMLElement | null {
   let submitBtn = container.querySelector('.hiprint-option-item-submitBtn') as HTMLElement | null
-  let deleteBtn = container.querySelector('.hiprint-option-item-deleteBtn') as HTMLElement | null
-
-  if (!submitBtn || !deleteBtn) {
+  if (!submitBtn) {
     const allButtons = container.querySelectorAll('button')
     allButtons.forEach((btn) => {
       const text = (btn.textContent || '').trim()
       if (!submitBtn && (text === '确定' || text === '保存' || text === '确认')) {
         submitBtn = btn as HTMLElement
       }
-      if (!deleteBtn && (text === '删除' || text === '移除')) {
-        deleteBtn = btn as HTMLElement
-      }
     })
   }
-
-  return { submitBtn, deleteBtn }
+  // 属性面板底部不再展示删除按钮（若 hiprint 仍生成则直接去掉）
+  container.querySelectorAll('.hiprint-option-item-deleteBtn').forEach((btn) => btn.remove())
+  return submitBtn
 }
 
 function moveButtonsToFooter() {
@@ -229,16 +294,19 @@ function moveButtonsToFooter() {
   const container = document.getElementById('PrintElementOptionSetting')
   if (!container) return
 
-  const { submitBtn, deleteBtn } = findButtons(container)
-  if (!submitBtn && !deleteBtn) return
-
-  footer.innerHTML = ''
-
+  const submitBtn = findSubmitButton(container)
   if (submitBtn) {
+    // 已在 footer 则无需再搬
+    if (submitBtn.parentElement === footer) return
+    footer.innerHTML = ''
     footer.appendChild(submitBtn)
+    return
   }
-  if (deleteBtn) {
-    footer.appendChild(deleteBtn)
+
+  // 设置区被清空（取消选中）时才清 footer；
+  // 仅因按钮已搬出触发的 mutation 不应清掉 footer 里的确定按钮
+  if (container.children.length === 0) {
+    footer.innerHTML = ''
   }
 }
 
@@ -252,7 +320,7 @@ function enhanceColorInputs() {
     const field = colorInput.parentElement
     if (!field || field.querySelector('input[type="range"]')) return
     colorInput.setAttribute('data-hex-enhanced', '1')
-    colorInput.setAttribute('data-color-pristine', '1')
+    // 勿强行标 pristine：setValue 已按「是否有真实颜色」设置；增强时仅补齐 hex UI
     field.classList.add('color-field-enhanced')
 
     // 标记 option item
@@ -264,10 +332,15 @@ function enhanceColorInputs() {
         optionItem.setAttribute('data-option-name', 'backgroundColor')
       } else if (text.includes('表头背景')) {
         optionItem.setAttribute('data-option-name', 'tableHeaderBackground')
+      } else if (text.includes('字体颜色')) {
+        optionItem.setAttribute('data-option-name', 'color')
       } else if (text.includes('边框颜色') || text.includes('border')) {
         optionItem.setAttribute('data-option-name', 'borderColor')
-      } else if (text.includes('颜色') || text.includes('Color')) {
+      } else if (text === '颜色' || text.includes('Color')) {
+        // 线条等元素的「颜色」→ borderColor
         optionItem.setAttribute('data-option-name', 'borderColor')
+      } else if (text.includes('颜色')) {
+        optionItem.setAttribute('data-option-name', 'color')
       }
     }
 
@@ -277,6 +350,9 @@ function enhanceColorInputs() {
     hexInput.value = ''
     hexInput.placeholder = '#RRGGBB'
     hexInput.maxLength = 7
+    if (!colorInput.hasAttribute('data-color-pristine') && colorInput.value) {
+      hexInput.value = colorInput.value.toUpperCase()
+    }
     field.appendChild(hexInput)
 
     const markDirty = () => {
@@ -359,7 +435,6 @@ const GROUP_CONFIGS: GroupConfig[] = [
   { title: '偏移调整', labels: ['左偏移', '顶部偏移', '右偏移', '下偏移'], datasetKey: 'offsetGrouped' },
   { title: '边框设置', labels: ['上边框', '左边框', '右边框', '下边框'], datasetKey: 'borderGrouped' },
   { title: '边距设置', labels: ['上内边距', '左内边距', '右内边距', '下内边距'], datasetKey: 'paddingGrouped' },
-  { title: '页尾设置', labels: ['首页页尾', '尾页页尾', '偶数页页尾', '奇数页页尾'], datasetKey: 'footerGrouped' },
   { title: '对齐方式', labels: ['左右对齐', '上下对齐'], datasetKey: 'alignGrouped' },
 ]
 
@@ -481,11 +556,15 @@ onMounted(() => {
     enhanceFieldInputs()
     enhanceFontSizeSelect()
     enhanceOptionGroups()
-    if (moveTimer) clearTimeout(moveTimer)
-    moveTimer = setTimeout(moveButtonsToFooter, 50)
+    // 同步搬到 footer，避免列表里短暂出现第二个「确定」
+    moveButtonsToFooter()
+    refreshSelectedCount()
   })
 
   observer.observe(container, { childList: true, subtree: true })
+
+  document.addEventListener('mouseup', refreshSelectedCount, true)
+  document.addEventListener('keyup', refreshSelectedCount, true)
 
   nextTick(() => {
     setupAutoSubmitInputListener()
@@ -494,6 +573,7 @@ onMounted(() => {
     enhanceFontSizeSelect()
     enhanceOptionGroups()
     moveButtonsToFooter()
+    refreshSelectedCount()
   })
 })
 
@@ -503,14 +583,15 @@ watch(() => props.element, () => {
     enhanceFieldInputs()
     enhanceFontSizeSelect()
     enhanceOptionGroups()
-    if (moveTimer) clearTimeout(moveTimer)
-    moveTimer = setTimeout(moveButtonsToFooter, 100)
+    moveButtonsToFooter()
+    refreshSelectedCount()
   })
 })
 
 onUnmounted(() => {
   observer?.disconnect()
-  if (moveTimer) clearTimeout(moveTimer)
+  document.removeEventListener('mouseup', refreshSelectedCount, true)
+  document.removeEventListener('keyup', refreshSelectedCount, true)
 })
 </script>
 
@@ -526,9 +607,11 @@ onUnmounted(() => {
 }
 
 .panel-header {
-  height: 36px;
+  min-height: 36px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   padding: 0 12px;
   font-size: var(--font-size-title);
   font-weight: 600;
@@ -536,6 +619,13 @@ onUnmounted(() => {
   border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
   background: #fafbfc;
+}
+
+.multi-select-hint {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--selection-color, #4C8BF5);
+  white-space: nowrap;
 }
 
 .settings-container {
@@ -786,6 +876,12 @@ onUnmounted(() => {
   accent-color: #4C8BF5;
 }
 
+/* hiprint 会先在设置列表里插入「确定」，搬到 footer 前先隐藏，避免闪出第二个按钮 */
+#PrintElementOptionSetting .hiprint-option-item-submitBtn,
+#PrintElementOptionSetting .hiprint-option-item-deleteBtn {
+  display: none !important;
+}
+
 /* ── Submit button in footer ── */
 .panel-footer .hiprint-option-item-submitBtn {
   height: 32px !important;
@@ -802,24 +898,6 @@ onUnmounted(() => {
 .panel-footer .hiprint-option-item-submitBtn:hover {
   background: #3b6de6 !important;
   border-color: #3b6de6 !important;
-}
-
-.panel-footer .hiprint-option-item-deleteBtn {
-  height: 32px !important;
-  font-size: 13px !important;
-  padding: 4px 16px !important;
-  border-radius: 4px !important;
-  border: 1px solid #d9d9d9 !important;
-  background: #fff !important;
-  color: #ff4d4f !important;
-  cursor: pointer !important;
-  transition: all 0.15s !important;
-}
-
-.panel-footer .hiprint-option-item-deleteBtn:hover {
-  color: #fff !important;
-  background: #ff4d4f !important;
-  border-color: #ff4d4f !important;
 }
 
 /* ── Color picker: color swatch + hex text input ── */

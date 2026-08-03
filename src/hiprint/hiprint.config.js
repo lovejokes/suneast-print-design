@@ -10,33 +10,9 @@
     adsorbMin: 3, //吸附最小距离pt
     showAdsorbLine: true, //显示吸附线
     adsorbLineMin: 6, //吸附线显示最小距离pt
-    paperNumberContinue: true, //连续打印页码
+    paperNumberContinue: true, // 固定连续编号；面板配置项已移除，勿再暴露 UI
     panel: {
       supportOptions: [
-        {
-          name: 'panelPaperRule',
-          hidden: false
-        },
-        {
-          name: 'panelPageRule',
-          hidden: false
-        },
-        {
-          name: 'firstPaperFooter',
-          hidden: false
-        },
-        {
-          name: 'evenPaperFooter',
-          hidden: false
-        },
-        {
-          name: 'oddPaperFooter',
-          hidden: false
-        },
-        {
-          name: 'lastPaperFooter',
-          hidden: false
-        },
         {
           name: 'leftOffset',
           hidden: false
@@ -63,10 +39,6 @@
         },
         {
           name: 'paperNumberDisabled',
-          hidden: false
-        },
-        {
-          name: 'paperNumberContinue',
           hidden: false
         },
         {
@@ -445,6 +417,10 @@
             {
               name: 'fixed',
               hidden: false
+            },
+            {
+              name: 'floatOverlay',
+              hidden: false
             }]
         },
         {
@@ -497,6 +473,10 @@
         },
         {
           name: 'fixed',
+          hidden: false
+        },
+        {
+          name: 'floatOverlay',
           hidden: false
         },
         {
@@ -808,7 +788,8 @@
         }
       ],
       default: {
-        height: 42,
+        // 默认贴一行左右内容高度；需要占位用样式里的「最低高度」
+        height: 18,
         width: 300,
         backgroundColor: '',
         borderColor: '',

@@ -23,6 +23,7 @@ export default function (hiprint) {
             type: 'longText',
             options: {
               lineHeight: 15,
+              height: 18,
             },
           },
           {

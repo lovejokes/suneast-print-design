@@ -20,6 +20,7 @@
       @align-top="align('top')"
       @align-middle="align('middle')"
       @align-bottom="align('bottom')"
+      @apply-table-layout="applyTableLayout"
       @bring-forward="layer('up')"
       @send-backward="layer('down')"
       @toggle-grid="store.gridEnabled = !store.gridEnabled"
@@ -37,8 +38,6 @@
       <DesignCanvas
         :canvas-height="canvasHeight"
         :paper-height="paperHeight"
-        :paper-header="store.template.panels[0]?.paperHeader"
-        :paper-footer="store.template.panels[0]?.paperFooter"
         @resize-canvas="onResizeCanvas"
         @zoom="onCanvasZoom"
       />
@@ -79,8 +78,16 @@ import { message, Modal } from 'ant-design-vue'
 import { useDesignerStore } from '@/stores/designer'
 import { useHiprint } from '@/composables/useHiprint'
 import { useTemplate } from '@/composables/useTemplate'
-import { splitTallPanels } from '@/utils/splitPanel'
+import {
+  renderPreviewPages,
+  exportPreviewPapersToPdf,
+} from '@/utils/previewRender'
 import { PREVIEW_DATA } from '@/data/preview-data'
+import {
+  computeTableLayout,
+  isTableLayoutElementType,
+  writeTableCellBorderOptions,
+} from '@/utils/tableLayout'
 
 import AppHeader from '@/components/designer/AppHeader.vue'
 import ElementsPanel from '@/components/designer/ElementsPanel.vue'
@@ -93,7 +100,7 @@ import defaultProviderFn from '@/providers/default-provider'
 import customProviderFn from '@/providers/custom-provider'
 
 const store = useDesignerStore()
-const { hiprintTemplate, init, destroy, setZoom, print } = useHiprint()
+const { hiprintTemplate, init, destroy, setZoom } = useHiprint()
 const { downloadJSON, readFileAsJSON } = useTemplate()
 
 const elementsPanelRef = ref()
@@ -112,7 +119,14 @@ const paperSizes: Record<string, { width: number; height: number }> = {
   B5: { width: 176, height: 250 },
 }
 
-const paperHeight = computed(() => paperSizes[store.paperType]?.height ?? 297)
+/** 单页纸高：纵向取长边，横向取短边（与方向切换后的画布分页一致） */
+const paperHeight = computed(() => {
+  const size = paperSizes[store.paperType] ?? { width: 210, height: 297 }
+  const shortEdge = Math.min(size.width, size.height)
+  const longEdge = Math.max(size.width, size.height)
+  const orient = Number((store.template.panels[0] as any)?.orient) || 1
+  return orient === 2 ? shortEdge : longEdge
+})
 const canvasHeight = computed(() => store.template.panels[0]?.height ?? paperHeight.value)
 
 function paperTypeChange(type: string) {
@@ -138,24 +152,59 @@ function onCanvasZoom(direction: 'in' | 'out') {
   direction === 'in' ? zoomIn() : zoomOut()
 }
 
+function clearDesignSelection() {
+  const root = document.querySelector('#hiprint-printTemplate')
+  if (!root) return
+  root.querySelectorAll('div[panelindex].selected').forEach((el) => {
+    const node = el as HTMLElement
+    node.classList.remove('selected')
+    node.style.display = 'none'
+  })
+  root.querySelectorAll('.hiprint-printElement-table.selected').forEach((el) => {
+    el.classList.remove('selected')
+  })
+  // 清掉可能残留的 inline display，交给 CSS 按选中态控制拖动点显隐
+  root.querySelectorAll('.resizebtn').forEach((el) => {
+    ;(el as HTMLElement).style.removeProperty('display')
+  })
+}
+
 function handlePrint() {
   // 预览前同步 hiprint 当前状态到 store（拖拽添加的元素在 hiprint 内部，不在 store 中）
   syncStoreFromHiprint()
+  clearDesignSelection()
   previewOpen.value = true
 }
 
 function handlePdf() {
   try {
-    // 导出 PDF 前同步最新状态，并按纸高拆分 panel，使每页重复页眉/页脚
     syncStoreFromHiprint()
-    const templateCopy = JSON.parse(JSON.stringify(store.template))
-    if (paperHeight.value) {
-      templateCopy.panels = splitTallPanels(templateCopy.panels, paperHeight.value)
-    }
-    const pt = new (window as any).hiprint.PrintTemplate({ template: templateCopy })
-    pt.toPdf(PREVIEW_DATA, '打印.pdf')
+    const host = document.createElement('div')
+    host.style.cssText =
+      'position:fixed;left:-10000px;top:0;opacity:0;pointer-events:none;z-index:-1;'
+    document.body.appendChild(host)
+    const { dispose } = renderPreviewPages(
+      host,
+      store.template,
+      PREVIEW_DATA,
+      paperHeight.value,
+    )
+    message.info({
+      content: '请在打印对话框中选择「另存为 PDF」或「Microsoft Print to PDF」',
+      duration: 4,
+    })
+    exportPreviewPapersToPdf(host)
+      .catch((e) => {
+        console.error('导出 PDF 失败', e)
+        message.error('导出 PDF 失败')
+      })
+      .finally(() => {
+        dispose()
+        host.remove()
+      })
   } catch (e) {
     console.error('导出 PDF 失败', e)
+    message.error('导出 PDF 失败')
   }
 }
 
@@ -204,7 +253,12 @@ function align(dir: string) {
   const builtInSelected = (tpl as any).getSelectEls?.()
   if (builtInSelected && builtInSelected.length > 1) {
     ;(tpl as any).setElsAlign?.(map[dir])
-    store.pushHistory()
+    try {
+      ;(window as any).hinnn?.event?.trigger?.(
+        'hiprintTemplateDataChanged_' + tpl.id,
+        '对齐',
+      )
+    } catch {}
     return
   }
 
@@ -354,7 +408,105 @@ function align(dir: string) {
       '对齐',
     )
   } catch {}
-  store.pushHistory()
+}
+
+/** 多选文本 → 假表格布局 */
+function applyTableLayout() {
+  const tpl = hiprintTemplate.value as any
+  if (!tpl?.editingPanel) {
+    message.warning('请先选中画布上的元素')
+    return
+  }
+
+  let selectedEls: any[] = Array.isArray(tpl.getSelectEls?.())
+    ? [...tpl.getSelectEls()]
+    : []
+  if (selectedEls.length < 2) {
+    selectedEls = (tpl.editingPanel.printElements || []).filter((el: any) => {
+      try {
+        const last = el.designTarget?.children?.()?.last?.()
+        return last?.css?.('display') === 'block' && last?.hasClass?.('selected')
+      } catch {
+        return false
+      }
+    })
+  }
+
+  if (selectedEls.length < 2) {
+    message.warning('请先框选至少 2 个文本元素')
+    return
+  }
+  if (
+    selectedEls.some(
+      (el) => !isTableLayoutElementType(String(el.printElementType?.type || '')),
+    )
+  ) {
+    message.warning('仅支持文本 / 长文，请去掉表格、图片、线条等后再试')
+    return
+  }
+
+  const rects = selectedEls.map((el, id) => ({
+    id,
+    left: Number(el.options?.getLeft?.() ?? el.options?.left ?? 0),
+    top: Number(el.options?.getTop?.() ?? el.options?.top ?? 0),
+    width: Number(el.options?.getWidth?.() ?? el.options?.width ?? 0),
+    height: Number(el.options?.getHeight?.() ?? el.options?.height ?? 0),
+  }))
+
+  const computed = computeTableLayout(rects)
+  if (!computed.ok) {
+    message.warning('无法识别为表格行列，请调整位置后再试')
+    return
+  }
+
+  const byId = new Map(computed.results.map((r) => [r.id, r]))
+  selectedEls.forEach((el, id) => {
+    const next = byId.get(id)
+    if (!next || !el.options) return
+
+    el.options.setLeft?.(next.left)
+    el.options.setTop?.(next.top)
+    el.options.copyDesignTopFromTop?.()
+    el.options.setWidth?.(next.width)
+    el.options.setHeight?.(next.height)
+    el.options.left = next.left
+    el.options.top = next.top
+    el.options.width = next.width
+    el.options.height = next.height
+    if (String(el.printElementType?.type || '').toLowerCase().includes('longtext')) {
+      el.options.lHeight = next.height
+    }
+    try {
+      el.designTarget?.css?.('left', el.options.displayLeft?.() ?? `${next.left}pt`)
+      el.designTarget?.css?.('top', el.options.displayTop?.() ?? `${next.top}pt`)
+      el.designTarget?.css?.('width', el.options.displayWidth?.() ?? `${next.width}pt`)
+      el.designTarget?.css?.('height', el.options.displayHeight?.() ?? `${next.height}pt`)
+    } catch {
+      /* ignore */
+    }
+
+    writeTableCellBorderOptions(el.options, next.rowIndex, next.colIndex)
+    try {
+      el.updateDesignViewFromOptions?.()
+    } catch {
+      /* ignore */
+    }
+  })
+
+  try {
+    ;(window as any).hinnn?.event?.trigger?.(
+      'hiprintTemplateDataChanged_' + tpl.id,
+      '应用表格布局',
+    )
+    const key = selectedEls[0]?.getPrintElementSelectEventKey?.()
+    if (key) {
+      ;(window as any).hinnn?.event?.trigger?.(key, { printElement: selectedEls[0] })
+    }
+  } catch {
+    /* ignore */
+  }
+
+  message.success(`已应用表格布局（${selectedEls.length} 个元素）`)
 }
 
 function layer(dir: string) {
@@ -365,11 +517,126 @@ function layer(dir: string) {
   }
 }
 
-function onResizeCanvas(newHeight: number) {
-  if (store.template.panels[0]) {
-    store.template.panels[0].paperFooter = newHeight
-    store.pushHistory()
+/** 将画布高度设为指定 mm，并同步 DOM / store（增减均可） */
+function applyCanvasHeight(newHeight: number) {
+  if (!hiprintTemplate.value) return
+  const ep = hiprintTemplate.value.editingPanel
+  if (!ep) return
+
+  const hinnn = (window as any).hinnn
+  const $ = (window as any).$
+  if (!hinnn || !$) return
+
+  const oldHeight = Number(ep.height) || 0
+  if (!newHeight || newHeight === oldHeight) return
+
+  const trim = (window as any).HIPRINT_CONFIG?.panel?.default?.paperHeightTrim ?? 0
+  const deltaPt = hinnn.mm.toPt(newHeight - oldHeight)
+  const oldHPt = hinnn.mm.toPt(oldHeight)
+  const newHPt = hinnn.mm.toPt(newHeight)
+
+  ep.height = newHeight
+  // paperFooter 贴近画布底边：按原底部间距等比落到新高度
+  if (ep.paperFooter != null) {
+    const gap = Math.max(0, oldHPt - Number(ep.paperFooter))
+    ep.paperFooter = Math.max(0, newHPt - gap)
+  } else {
+    ep.paperFooter = (ep.paperFooter || 0) + deltaPt
   }
+  ep.designPaper.paperFooter = ep.paperFooter
+
+  // 画布增减时保持页码贴底（与页尾元素同逻辑），避免顶坐标悬空或落在 overflow 外
+  const dp = ep.designPaper
+  if (dp) {
+    const rawTop = Number(dp.paperNumberTop)
+    const gap =
+      Number.isFinite(rawTop) && rawTop > 0
+        ? Math.max(0, oldHPt - rawTop - 22)
+        : 0
+    dp.paperNumberTop = Math.max(0, Math.round(newHPt - gap - 22))
+    ep.paperNumberTop = dp.paperNumberTop
+    const rawLeft = Number(dp.paperNumberLeft)
+    const wPt = Number(dp.width) || hinnn.mm.toPt(ep.width)
+    if (!(rawLeft > 0) || rawLeft > wPt) {
+      dp.paperNumberLeft = Math.max(0, Math.round(wPt - 30))
+      ep.paperNumberLeft = dp.paperNumberLeft
+    }
+  }
+
+  ep.designPaper.resize(ep.width, ep.height)
+  ep.designPaper.mmheight = ep.height
+
+  const heightCss = ep.height - trim + 'mm'
+  ep.target.css('height', heightCss)
+  ep.target.attr('original-height', ep.height)
+  ep.target.parent().css('height', heightCss)
+  ep.designPaper.target.css('height', heightCss)
+  ep.designPaper.footerLinetarget?.css('top', ep.paperFooter + 'pt')
+
+  const panel = store.template.panels[0]
+  if (panel) {
+    panel.height = ep.height
+    panel.paperFooter = ep.paperFooter
+  }
+  try {
+    ;(window as any).hinnn?.event?.trigger?.(
+      'hiprintTemplateDataChanged_' + hiprintTemplate.value.id,
+      '调整大小',
+    )
+  } catch {}
+}
+
+/**
+ * 拖拽手柄从底部向上裁剪画布：保留高度以上的内容，删除 top 落在裁剪线下方的元素。
+ */
+function onResizeCanvas(newHeight: number) {
+  if (!hiprintTemplate.value) return
+  const ep = hiprintTemplate.value.editingPanel
+  if (!ep) return
+
+  const hinnn = (window as any).hinnn
+  if (!hinnn?.mm) return
+
+  const oldHeight = Number(ep.height) || Number(store.template.panels[0]?.height) || 0
+  const targetHeight = Math.round(Number(newHeight) * 10) / 10
+  if (!targetHeight || Math.abs(targetHeight - oldHeight) < 0.5) return
+  if (targetHeight < paperHeight.value) return
+
+  const apply = () => applyCanvasHeight(targetHeight)
+
+  if (targetHeight >= oldHeight) {
+    apply()
+    return
+  }
+
+  const cutPt = hinnn.mm.toPt(targetHeight)
+  const toDelete = (ep.printElements || []).filter((el: any) => {
+    const top = Number(el?.options?.top)
+    return Number.isFinite(top) && top >= cutPt
+  })
+
+  if (toDelete.length === 0) {
+    apply()
+    message.success(`画布已裁剪为 ${targetHeight} mm`)
+    return
+  }
+
+  Modal.confirm({
+    title: '确认裁剪画布',
+    content: `裁剪线下方有 ${toDelete.length} 个元素将被删除，是否继续？`,
+    okText: '确认裁剪',
+    okType: 'danger',
+    cancelText: '取消',
+    centered: true,
+    onOk: () => {
+      toDelete.forEach((el: any) => {
+        try {
+          el.delete?.()
+        } catch {}
+      })
+      apply()
+    },
+  })
 }
 
 /** 同步 hiprint 内部状态到 Pinia store（拖拽添加的元素在 hiprint 内部，需在预览/导出前调用） */
@@ -378,6 +645,16 @@ function syncStoreFromHiprint() {
   try {
     const json = hiprintTemplate.value.getJson()
     if (json && json.panels) {
+      // 运行时面板上的右/下偏移以 live 为准，避免序列化链路漏字段导致预览停行线失效
+      const lives = (hiprintTemplate.value as any).printPanels || []
+      json.panels.forEach((p: any, i: number) => {
+        const live = lives[i]
+        if (!live) return
+        if (live.bottomOffset != null) p.bottomOffset = live.bottomOffset
+        if (live.rightOffset != null) p.rightOffset = live.rightOffset
+        if (live.leftOffset != null) p.leftOffset = live.leftOffset
+        if (live.topOffset != null) p.topOffset = live.topOffset
+      })
       Object.assign(store.template, JSON.parse(JSON.stringify(json)))
     }
   } catch (e) {
@@ -408,57 +685,59 @@ function handleClearCanvas() {
 }
 
 function handleIncreaseHeight() {
-  if (!hiprintTemplate.value) return
-  const ep = hiprintTemplate.value.editingPanel
+  const ep = hiprintTemplate.value?.editingPanel
   if (!ep) return
-
-  const hinnn = (window as any).hinnn
-  const $ = (window as any).$
-  if (!hinnn || !$) return
-
-  const addMm = paperHeight.value
-  const addPt = hinnn.mm.toPt(addMm)
-  const trim = (window as any).HIPRINT_CONFIG?.panel?.default?.paperHeightTrim ?? 0
-
-  // 扩展面板高度和页脚线位置
-  ep.height += addMm
-  ep.paperFooter += addPt
-  // 必须同步 designPaper.paperFooter 再调用 resize()，
-  // 否则 resize() 内部的 triggerOnPaperBaseInfoChanged 回调会用旧值覆盖 ep.paperFooter
-  ep.designPaper.paperFooter = ep.paperFooter
-
-  // 更新 hiprint 内部渲染
-  ep.designPaper.resize(ep.width, ep.height)
-  ep.designPaper.mmheight = ep.height
-
-  // 更新 DOM 中面板的 CSS 高度
-  const heightCss = (ep.height - trim) + 'mm'
-  ep.target.css('height', heightCss)
-  ep.target.attr('original-height', ep.height)
-  ep.target.parent().css('height', heightCss)
-  ep.designPaper.target.css('height', heightCss)
-
-  // 更新页脚线位置
-  ep.designPaper.footerLinetarget.css('top', ep.paperFooter + 'pt')
-
-  // 同步到 store
-  const panel = store.template.panels[0]
-  if (panel) {
-    panel.height = ep.height
-    panel.paperFooter = ep.paperFooter
-  }
-  store.pushHistory()
+  applyCanvasHeight(Number(ep.height) + paperHeight.value)
 }
 
 function onTemplateSelect(tpl: any) {
-  if (tpl.template) {
-    store.importTemplate(tpl.template)
-    hiprintTemplate.value?.update?.(JSON.parse(JSON.stringify(store.template)))
+  if (!tpl?.template?.panels?.length) {
+    message.warning('该模板数据无效')
+    return
   }
+  store.importTemplate(tpl.template)
+  if (tpl.paperType) store.setPaperType(tpl.paperType)
+  hiprintTemplate.value?.update?.(JSON.parse(JSON.stringify(store.template)))
+  message.success(`已加载模板：${tpl.name || '未命名'}`)
 }
 
 function onElementUpdate(options: Record<string, unknown>) {
-  hiprintTemplate.value?.updateElementOption?.(options)
+  const tpl = hiprintTemplate.value as any
+  if (!tpl?.editingPanel) return
+
+  const selected = (tpl.editingPanel.printElements || []).filter((el: any) => {
+    try {
+      const type = String(el.printElementType?.type || '')
+      if (type.includes('table')) {
+        return !!el.designTarget?.hasClass?.('selected')
+      }
+      const last = el.designTarget?.children?.()?.last?.()
+      return !!(last && last.css?.('display') === 'block' && last.hasClass?.('selected'))
+    } catch {
+      return false
+    }
+  })
+
+  const targets =
+    selected.length > 0
+      ? selected
+      : (tpl.getSelectEls?.() || [])
+
+  if (!targets.length) return
+
+  Object.keys(options).forEach((key) => {
+    targets.forEach((el: any) => {
+      el.updateOption?.(key, options[key], true)
+    })
+  })
+  try {
+    ;(window as any).hinnn?.event?.trigger(
+      'hiprintTemplateDataChanged_' + tpl.id,
+      '参数修改',
+    )
+  } catch {
+    /* ignore */
+  }
 }
 
 onMounted(() => {
@@ -480,12 +759,6 @@ onMounted(() => {
       '#PrintElementOptionSetting',
       [defaultProvider, customProvider],
       rawTemplate,
-      undefined,
-      {
-        onDataChanged() {
-          store.pushHistory()
-        },
-      }
     )
   } catch (e) {
     console.error('hiprint 初始化失败:', e)

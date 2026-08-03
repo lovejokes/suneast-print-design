@@ -120,6 +120,12 @@
         <a-button type="text" size="small" @click="$emit('alignBottom')"><AlignBottomIcon /></a-button>
       </a-tooltip>
 
+      <a-tooltip title="应用表格布局：首行定宽、末格拉满、边框去重成单线">
+        <a-button type="text" size="small" @click="$emit('applyTableLayout')">
+          <TableLayoutIcon />
+        </a-button>
+      </a-tooltip>
+
       <span class="tool-sep" />
 
       <a-tooltip title="上移一层">
@@ -186,6 +192,7 @@ import {
   UndoIcon, RedoIcon,
   AlignLeftIcon, AlignCenterIcon, AlignRightIcon,
   AlignTopIcon, AlignMiddleIcon, AlignBottomIcon,
+  TableLayoutIcon,
   BringForwardIcon, SendBackwardIcon,
 } from '@/assets/icons'
 import { ref } from 'vue'
@@ -213,6 +220,7 @@ const emit = defineEmits<{
   alignTop: []
   alignMiddle: []
   alignBottom: []
+  applyTableLayout: []
   bringForward: []
   sendBackward: []
   preview: []

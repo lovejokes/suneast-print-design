@@ -8,8 +8,8 @@
   >
     <div class="tm-grid">
       <div
-        v-for="(tpl, i) in templateList"
-        :key="i"
+        v-for="tpl in templateList"
+        :key="tpl.id"
         class="tm-card"
         @click="selectTemplate(tpl)"
       >

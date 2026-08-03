@@ -16,20 +16,32 @@
     </div>
     <div class="preview-footer">
       <a-space>
-        <a-button size="small" @click="handlePrint">
+        <a-button
+          size="small"
+          :loading="printBusy"
+          :disabled="pdfBusy || imagePdfBusy"
+          @click="handlePrint"
+        >
           <PrintIcon />
           打印
         </a-button>
-        <a-button size="small" @click="handleExportPdf">
+        <a-button
+          size="small"
+          :loading="pdfBusy"
+          :disabled="printBusy || imagePdfBusy"
+          @click="handleExportPdf"
+        >
           <PdfIcon />
           导出 PDF
         </a-button>
-        <a-button size="small" @click="zoomOut">
-          <ZoomOutIcon />
-        </a-button>
-        <span style="font-size:12px; color:#666">{{ Math.round(previewZoom * 100) }}%</span>
-        <a-button size="small" @click="zoomIn">
-          <ZoomInIcon />
+        <a-button
+          size="small"
+          :loading="imagePdfBusy"
+          :disabled="printBusy || pdfBusy"
+          @click="handleExportImagePdf"
+        >
+          <PdfIcon />
+          图片 PDF
         </a-button>
       </a-space>
     </div>
@@ -38,8 +50,14 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onUnmounted, nextTick } from 'vue'
-import { PrintIcon, PdfIcon, ZoomInIcon, ZoomOutIcon } from '@/assets/icons'
-import { splitTallPanels } from '@/utils/splitPanel'
+import { message } from 'ant-design-vue'
+import { PrintIcon, PdfIcon } from '@/assets/icons'
+import {
+  renderPreviewPages,
+  printPreviewPapers,
+  exportPreviewPapersToPdf,
+  exportPreviewPapersToImagePdf,
+} from '@/utils/previewRender'
 
 const props = defineProps<{
   open: boolean
@@ -50,7 +68,6 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
-  (e: 'pdf'): void
 }>()
 
 const visible = computed({
@@ -60,13 +77,22 @@ const visible = computed({
 
 const scrollContainer = ref<HTMLElement>()
 const previewContent = ref<HTMLElement>()
-const previewZoom = ref(1)
+const printBusy = ref(false)
+const pdfBusy = ref(false)
+const imagePdfBusy = ref(false)
+let disposePreview: (() => void) | null = null
+
+const anyBusy = computed(
+  () => printBusy.value || pdfBusy.value || imagePdfBusy.value,
+)
 
 watch(
   () => props.open,
   (val) => {
     if (val) {
-      nextTick(() => setTimeout(initPreview, 150))
+      // 等 ant-modal 开场动画结束再渲染，避免分页用 getBoundingClientRect
+      // 读到 scale 中的坐标并写回错误 px
+      nextTick(() => setTimeout(initPreview, 320))
     } else {
       destroyPreview()
     }
@@ -77,117 +103,80 @@ function initPreview() {
   if (!window.hiprint || !previewContent.value) return
 
   try {
-    const templateCopy = JSON.parse(JSON.stringify(props.template))
-    const dataCopy = JSON.parse(JSON.stringify(props.data))
-
-    // 将超高 panel 拆分为标准纸高的多个 panel，使预览呈现多页效果
-    if (props.paperHeight && templateCopy.panels) {
-      templateCopy.panels = splitTallPanels(templateCopy.panels, props.paperHeight)
-    }
-
-    const pt = new window.hiprint.PrintTemplate({ template: templateCopy })
-    const $ = (window as any).$
-
-    // 独立渲染：每个 panel 渲染为自己的页面，不做续排
-    // 这样拆分后的多个 panel 会各自产生独立的 .hiprint-printPaper
-    const $result = $('<div class="hiprint-printTemplate"></div>')
-    const panels = pt.printPanels || []
-
-    const allPages: any[] = []
-
-    panels.forEach((panel: any) => {
-      const localPages: any[] = []
-      const target = panel.getHtml(dataCopy, {}, localPages)
-      if (target) $result.append(target)
-      allPages.push(...localPages)
-    })
-
-    // 统一更新所有页码，避免局部与全局页码不一致
-    // 优先使用 panel.getHtml 返回的 localPages；若为空，则回退到 hiprint 全局 _paperList
-    const paperList = (window as any).hinnn?._paperList || []
-    const pagesToUpdate = allPages.length > 0 ? allPages : paperList
-    pagesToUpdate.forEach((page: any, pi: number) => {
-      page.updatePaperNumber?.(pi + 1, pagesToUpdate.length)
-    })
-
-    // 清空 hiprint 全局页码状态，防止下次预览时页码累加
-    if (window.hinnn) {
-      window.hinnn._paperList = []
-    }
-
-    const $container = $(previewContent.value)
-    $container.empty().append($result)
-
-    const papers = previewContent.value.querySelectorAll('.hiprint-printPaper')
-
-    papers.forEach((paper: Element) => {
-      const el = paper as HTMLElement
-      el.style.overflow = 'hidden'
-      el.style.background = '#ffffff'
-
-      const contentEl = el.querySelector('.hiprint-printPaper-content') as HTMLElement
-      if (contentEl) {
-        // getHtml() 会注入 panel 的 leftOffset/topOffset 到 contentEl 的 CSS，
-        // 但设计模式下元素位置已通过钳位包含了 offset，预览时必须清零避免双重偏移
-        contentEl.style.left = '0pt'
-
-        contentEl.style.bottom = ''
-        contentEl.style.right = ''
-        contentEl.style.width = '100%'
-        contentEl.style.height = '100%'
-        contentEl.style.minHeight = '100%'
-        contentEl.style.overflow = 'visible'
-      }
-
-      Array.from(el.children).forEach((child) => {
-        const c = child as HTMLElement
-        if (window.getComputedStyle(c).position === 'absolute') {
-          c.style.pointerEvents = 'none'
-        }
-      })
-    })
-
-    previewContent.value.querySelectorAll('.hiprint_rul_wrapper').forEach((el) => el.remove())
-
-    ;(previewContent.value as any).__pt = pt
-
+    destroyPreview()
+    const result = renderPreviewPages(
+      previewContent.value,
+      props.template,
+      props.data,
+      props.paperHeight,
+    )
+    disposePreview = result.dispose
     if (scrollContainer.value) {
       scrollContainer.value.scrollTop = 0
     }
-
-    // 发布分页完成事件，让画布可以接收选区元素
-    if (typeof window !== 'undefined' && window.hinnn) {
-      window.hinnn.trigger && window.hinnn.trigger('previewReady', pt)
-    }
   } catch (e) {
     console.error('预览失败', e)
+    message.error('预览失败')
   }
 }
 
 function destroyPreview() {
-  if (previewContent.value) {
-    const pt = (previewContent.value as any).__pt
-    if (pt) {
-      try { pt.clear() } catch (e) { /* ignore */ }
+  if (disposePreview) {
+    try {
+      disposePreview()
+    } catch {
+      /* ignore */
     }
+    disposePreview = null
+  } else if (previewContent.value) {
     previewContent.value.innerHTML = ''
   }
 }
 
-function handlePrint() {
-  window.print()
+async function handlePrint() {
+  if (!previewContent.value || anyBusy.value) return
+  printBusy.value = true
+  try {
+    await printPreviewPapers(previewContent.value)
+  } catch (e: any) {
+    console.error('打印失败', e)
+    message.error(e?.message || '打印失败')
+  } finally {
+    printBusy.value = false
+  }
 }
 
-function handleExportPdf() {
-  emit('pdf')
+async function handleExportPdf() {
+  if (!previewContent.value || anyBusy.value) return
+  pdfBusy.value = true
+  try {
+    message.info({
+      content: '请在打印对话框中选择「另存为 PDF」或「Microsoft Print to PDF」',
+      duration: 4,
+    })
+    await exportPreviewPapersToPdf(previewContent.value)
+  } catch (e: any) {
+    console.error('导出 PDF 失败', e)
+    message.error(e?.message || '导出 PDF 失败')
+  } finally {
+    pdfBusy.value = false
+  }
 }
 
-function zoomOut() {
-  previewZoom.value = Math.max(0.25, previewZoom.value - 0.1)
-}
-
-function zoomIn() {
-  previewZoom.value = Math.min(3, previewZoom.value + 0.1)
+async function handleExportImagePdf() {
+  if (!previewContent.value || anyBusy.value) return
+  imagePdfBusy.value = true
+  const hide = message.loading('正在生成图片 PDF…', 0)
+  try {
+    await exportPreviewPapersToImagePdf(previewContent.value, '打印.pdf')
+    message.success('图片 PDF 已导出')
+  } catch (e: any) {
+    console.error('图片 PDF 导出失败', e)
+    message.error(e?.message || '图片 PDF 导出失败')
+  } finally {
+    hide()
+    imagePdfBusy.value = false
+  }
 }
 
 onUnmounted(destroyPreview)
@@ -212,20 +201,14 @@ onUnmounted(destroyPreview)
 }
 
 .preview-content :deep(.hiprint-printPaper) {
-  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
   flex-shrink: 0;
 }
 
-/* 页码样式 */
 .preview-content :deep(.hiprint-paperNumber) {
   font-size: 11px;
   color: #888;
   font-family: Arial, sans-serif;
-  /* 强制页码显示在 paper 右下角，避免 contentEl 高度变化导致被裁剪 */
-  top: auto !important;
-  left: auto !important;
-  right: 12px !important;
-  bottom: 12px !important;
 }
 
 .preview-footer {

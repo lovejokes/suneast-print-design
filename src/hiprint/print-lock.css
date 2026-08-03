@@ -19,6 +19,13 @@
    outline: var(--selection-color, #1890ff) dashed auto 0px;
 }
 
+/* 设计纸张本身可 focus（tabindex），避免浏览器默认黑色焦点边框 */
+.hiprint-printPaper.design:focus,
+.hiprint-printPaper.design:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
 .hiprint-printPaper {
   position: relative;
   padding: 0 0 0 0;
@@ -87,6 +94,32 @@
 .design .resize-panel {
   box-sizing: border-box;
   border: 1px dotted;
+}
+
+/*
+ * 纸张内独立层叠上下文：选中元素抬高层级只影响画布内相邻元素，
+ * 不会用超高 z-index 盖过预览等 ant-modal。
+ */
+.hiprint-printPaper.design,
+.hiprint-printPaper.design .hiprint-printPaper-content {
+  isolation: isolate;
+}
+
+.design .hiprint-printElement:has(> .resize-panel.selected),
+.design .hiprint-printElement.selected {
+  z-index: 9999 !important;
+}
+
+.design .resize-panel.selected {
+  z-index: 2;
+  overflow: visible;
+}
+
+.design .resize-panel.selected .resizebtn,
+.design .hiprint-printElement.selected > .resizebtn,
+.design .hiprint-printElement-table.selected .resizebtn {
+  z-index: 3;
+  pointer-events: auto;
 }
 
 .hiprint-printElement-text {
@@ -180,7 +213,7 @@ table.hiprint-printElement-tableTarget {
 }
 
 .hiprint-printElement-tableTarget, .hiprint-printElement-tableTarget tr, .hiprint-printElement-tableTarget td {
-  border-color: #d9d9d9;
+  border-color: #000;
   /*border-style: none;*/
   /*border: 1px solid rgb(0, 0, 0);*/
   font-weight: normal;
@@ -208,54 +241,54 @@ table.hiprint-printElement-tableTarget {
 
 /* 设计态：表格头加底部分割线，整体更清爽 */
 .design .hiprint-printElement-tableTarget thead th {
-  border-bottom: 1px solid #d9d9d9;
+  border-bottom: 1px solid #000;
 }
 
 .hiprint-printElement-tableTarget-border-all {
-  border: 1px solid #d9d9d9;
+  border: 1px solid #000;
 }
 .hiprint-printElement-tableTarget-border-none {
-  border: 0px solid #d9d9d9;
+  border: 0px solid #000;
 }
 .hiprint-printElement-tableTarget-border-lr {
-  border-left: 1px solid #d9d9d9;
-  border-right: 1px solid #d9d9d9;
+  border-left: 1px solid #000;
+  border-right: 1px solid #000;
 }
 .hiprint-printElement-tableTarget-border-left {
-  border-left: 1px solid #d9d9d9;
+  border-left: 1px solid #000;
 }
 .hiprint-printElement-tableTarget-border-right {
-  border-right: 1px solid #d9d9d9;
+  border-right: 1px solid #000;
 }
 .hiprint-printElement-tableTarget-border-tb {
-  border-top: 1px solid #d9d9d9;
-  border-bottom: 1px solid #d9d9d9;
+  border-top: 1px solid #000;
+  border-bottom: 1px solid #000;
 }
 .hiprint-printElement-tableTarget-border-top {
-  border-top: 1px solid #d9d9d9;
+  border-top: 1px solid #000;
 }
 .hiprint-printElement-tableTarget-border-bottom {
-  border-bottom: 1px solid #d9d9d9;
+  border-bottom: 1px solid #000;
 }
 
 .hiprint-printElement-tableTarget-border-td-none td {
-  border: 0px solid #d9d9d9;
+  border: 0px solid #000;
 }
 .hiprint-printElement-tableTarget-border-td-all td:not(:nth-last-child(-n+2)) {
-  border-right: 1px solid #d7d2d2;
+  border-right: 1px solid #000;
 }
 .hiprint-printElement-tableTarget-border-td-all td:not(last-child) {
-  border-right: 1px solid #d9d9d9;
+  border-right: 1px solid #000;
 }
 .hiprint-printElement-tableTarget-border-td-all td:last-child {
-  border-left: 1px solid #d9d9d9;
+  border-left: 1px solid #000;
 }
 .hiprint-printElement-tableTarget-border-td-all td:last-child:first-child {
   border-left: none;
 }
 
 .hiprint-printElement-tableTarget {
-  border: 1px solid #d9d9d9;
+  border: 1px solid #000;
 }
 
 /*.hiprint-printElement-tableTarget tr,*/
@@ -312,17 +345,24 @@ table.hiprint-printElement-tableTarget {
 .hiprint-text-content-middle {
 }
 
+/* 纵向 flex：justify 管上下，text-align 仍可管左右（勿用横向 flex，会吃掉 text-align） */
 .hiprint-text-content-middle > div {
-  display: grid;
-  align-items: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .hiprint-text-content-bottom {
 }
 
 .hiprint-text-content-bottom > div {
-  display: grid;
-  align-items: flex-end;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .hiprint-text-content-wrap {

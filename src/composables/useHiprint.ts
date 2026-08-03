@@ -1,10 +1,107 @@
 import { ref, nextTick, type Ref } from 'vue'
+import { useDesignerStore } from '@/stores/designer'
+import {
+  applyTableCellBorderCss,
+  restoreTableCellBorders,
+} from '@/utils/tableLayout'
 
 declare global {
   interface Window {
     hiprint: any
     $: any
     jQuery: any
+  }
+}
+
+/** 与 App.vue 一致的标准纸张尺寸（mm），用于方向切换时计算单页宽高 */
+const PAPER_SIZES: Record<string, { width: number; height: number }> = {
+  A3: { width: 420, height: 297 },
+  A4: { width: 210, height: 297 },
+  A5: { width: 148, height: 210 },
+  B3: { width: 500, height: 353 },
+  B4: { width: 250, height: 353 },
+  B5: { width: 176, height: 250 },
+}
+
+function getPaperEdges(panel: any, fallbackType: string): { shortEdge: number; longEdge: number } {
+  const type = panel?.paperType || fallbackType || 'A4'
+  const size = PAPER_SIZES[type] || PAPER_SIZES.A4
+  return {
+    shortEdge: Math.min(size.width, size.height),
+    longEdge: Math.max(size.width, size.height),
+  }
+}
+
+/**
+ * 切换纸张方向：只改单页纸宽，保持画布总高度与元素坐标。
+ * 例：A4 纵向 210×891 → 横向 297×891。
+ */
+function applyPanelPaperOrient(panel: any, newOrient: number, paperTypeHint: string) {
+  if (!panel) return
+
+  const { shortEdge, longEdge } = getPaperEdges(panel, paperTypeHint)
+  const oldOrient = panel.orient == null || panel.orient === '' ? 1 : Number(panel.orient)
+  if (oldOrient === newOrient) return
+  if (newOrient !== 1 && newOrient !== 2) return
+
+  const oldPageW = oldOrient === 2 ? longEdge : shortEdge
+  const newPageW = newOrient === 2 ? longEdge : shortEdge
+
+  const rawW = Number(panel.width) || oldPageW
+  let rawH = Number(panel.height) || shortEdge
+
+  // 若曾被整纸宽高对调，用异常宽度还原总高
+  if (Math.abs(rawW - oldPageW) > 2 && rawW > longEdge * 1.2) {
+    rawH = rawW
+  }
+
+  const newW = newPageW
+  const newH = rawH
+
+  panel.orient = newOrient
+  panel.width = newW
+  panel.height = newH
+
+  if (panel.designPaper) {
+    panel.designPaper.orient = newOrient
+  }
+
+  if (typeof panel.resize === 'function') {
+    panel.resize(panel.paperType, newW, newH, false)
+  } else if (panel.designPaper?.resize) {
+    panel.designPaper.resize(newW, newH)
+  }
+
+  // 方向切换后页宽变化：把贴在旧右缘的页码挪到新右下角，避免留在画布外或偏左看不见
+  const dp = panel.designPaper
+  if (dp) {
+    const hinnn = (window as any).hinnn
+    const wPt = Number(dp.width) || 0
+    const hPt = Number(dp.height) || 0
+    const left = Number(dp.paperNumberLeft)
+    const top = Number(dp.paperNumberTop)
+    const oldRightDefault =
+      (hinnn?.mm?.toPt?.(oldPageW) ?? oldPageW * (72 / 25.4)) - 30
+    const nearOldRight =
+      Number.isFinite(left) && Math.abs(left - oldRightDefault) < 40
+    if (!(left > 0) || left > wPt || nearOldRight) {
+      dp.paperNumberLeft = Math.max(0, Math.round(wPt - 30))
+      panel.paperNumberLeft = dp.paperNumberLeft
+    }
+    if (!(top > 0) || top > hPt) {
+      dp.paperNumberTop = Math.max(0, Math.round(hPt - 22))
+      panel.paperNumberTop = dp.paperNumberTop
+    }
+    dp.paperNumberTarget?.css?.('top', `${dp.paperNumberTop}pt`)
+      ?.css?.('left', `${dp.paperNumberLeft}pt`)
+  }
+
+  const trim = (window as any).HIPRINT_CONFIG?.panel?.default?.paperHeightTrim ?? 0
+  const heightCss = newH - trim + 'mm'
+  if (panel.target?.css) {
+    panel.target.css({ width: newW + 'mm', height: heightCss })
+    panel.target.attr?.('original-height', newH)
+    panel.target.parent?.()?.css?.('height', heightCss)
   }
 }
 
@@ -17,6 +114,62 @@ export function useHiprint() {
   let copyPasteKeyDownHandler: ((e: KeyboardEvent) => void) | null = null
   let docMouseUpHandler: ((e: MouseEvent) => void) | null = null
   let contextMenuHandler: ((e: MouseEvent) => void) | null = null
+  let historyKeyDownGuard: ((e: KeyboardEvent) => void) | null = null
+  /** 撤销/重做 update 期间为 true，吞掉其间的 DataChanged，避免污染历史 */
+  let historySuspended = false
+
+  function isDefaultBlackColor(v: unknown): boolean {
+    if (v == null || v === '') return false
+    const s = String(v).trim().toLowerCase()
+    return s === '#000000' || s === '#000' || s === 'rgb(0,0,0)' || s === 'rgba(0,0,0,1)'
+  }
+
+  function applyHistoryGuards(template: any) {
+    if (!template || template.__historyGuardsApplied) return
+    template.__historyGuardsApplied = true
+
+    const hinnn = (window as any).hinnn
+    if (!hinnn?.event?.trigger) return
+
+    // 全局只包一层 trigger，避免多次 init 嵌套
+    if (!hinnn.event.__historySuspendPatched) {
+      hinnn.event.__historySuspendPatched = true
+      const origTrigger = hinnn.event.trigger.bind(hinnn.event)
+      hinnn.event.trigger = function (name: string, arg?: any) {
+        const n = String(name || '')
+        // 撤销/重做：先挂起历史，再执行（内部 update 可能触发 DataChanged）
+        if (
+          n.indexOf('hiprintTemplateDataShortcutKey_') === 0 &&
+          (arg === 'undo' || arg === 'redo')
+        ) {
+          historySuspended = true
+          try {
+            return origTrigger(name, arg)
+          } finally {
+            setTimeout(() => {
+              historySuspended = false
+            }, 0)
+          }
+        }
+        if (historySuspended && n.indexOf('hiprintTemplateDataChanged_') === 0) {
+          return
+        }
+        return origTrigger(name, arg)
+      }
+    }
+
+    // 捕获阶段拦截键盘连发，避免按住 Ctrl+Z 一次跳多步
+    if (!historyKeyDownGuard) {
+      historyKeyDownGuard = function (e: KeyboardEvent) {
+        if (!(e.ctrlKey || e.metaKey) || e.keyCode !== 90) return
+        if (e.repeat) {
+          e.preventDefault()
+          e.stopImmediatePropagation()
+        }
+      }
+      document.addEventListener('keydown', historyKeyDownGuard, true)
+    }
+  }
 
   function init(
     containerSelector: string,
@@ -125,8 +278,10 @@ export function useHiprint() {
           // 一旦越过阈值就永久切换到 1:1 跟随模式：
           // 否则拖回起点附近时元素会卡在上一帧位置不动
           if (!e.data.__dzCrossed) {
-            // 双轴都在死区内 -> 不移动
+            // 双轴都在死区内 -> 不移动，并锁回起点（防止 mouseup 用抖动坐标落盘）
             if (Math.abs(dx) < DRAG_THRESHOLD && Math.abs(dy) < DRAG_THRESHOLD) {
+              e.data.left = e.data.startLeft
+              e.data.top = e.data.startTop
               return true
             }
             e.data.__dzCrossed = true
@@ -145,12 +300,9 @@ export function useHiprint() {
             e.data.top = e.data.startTop
           }
           // ── 边界钳位：死区逻辑修改了 e.data.left/top 后，
-          // hidraggable 原生 _mouseMove 中的钳位（hiprint.bundle.js:7103-7113）已被覆盖，
-          // 需要在死区计算后重新钳位，防止元素拖出面板边界
-          //
-          // 注意：不能依赖 data.options.designTarget.panel，因为页眉线/页脚线等
-          // 元素在 hidraggable 初始化时不传 designTarget。改用 closest() 从 DOM
-          // 查找纸张元素，偏移值优先取当前编辑面板，fallback 到 HIPRINT_CONFIG 全局默认。
+          // hidraggable 原生 _mouseMove 中的钳位已被覆盖，需重新钳位。
+          // 左右：leftOffset/rightOffset 硬限制；上下：边距可拖入，只限制在纸张内。
+          // 不能依赖 designTarget.panel（页眉/页脚线等不传 designTarget），用 closest 找纸张。
           const paperEl = (e.data.target as HTMLElement)?.closest?.('.hiprint-printPaper.design') as HTMLElement | null
           if (paperEl) {
             const paperW = paperEl.clientWidth
@@ -158,7 +310,6 @@ export function useHiprint() {
             const elementW = (e.data.target as HTMLElement)?.clientWidth || 0
             const elementH = (e.data.target as HTMLElement)?.clientHeight || 0
             let diffLeft = 0, diffTop = 0
-            // 处理旋转元素的边界修正
             if (data?.options?.designTarget?.options?.transform) {
               try {
                 const h = (window as any).hinnn
@@ -172,17 +323,17 @@ export function useHiprint() {
             const h = (window as any).hinnn
             const cfgDef = (window as any).HIPRINT_CONFIG?.panel?.default || {}
             const panel = data?.options?.designTarget?.panel || hiprintTemplate.value?.editingPanel
-            const leftOffsetPx = h?.pt?.toPx?.(Number(panel?.leftOffset ?? cfgDef.leftOffset ?? 0)) ?? 0
-            const rightOffsetPx = h?.pt?.toPx?.(Number(panel?.rightOffset ?? cfgDef.rightOffset ?? 0)) ?? 0
-            const topOffsetPx = h?.pt?.toPx?.(Number(panel?.topOffset ?? cfgDef.topOffset ?? 0)) ?? 0
-            const bottomOffsetPx = h?.pt?.toPx?.(Number(panel?.bottomOffset ?? cfgDef.bottomOffset ?? 0)) ?? 0
-            // 左右边界钳位（纸张相对坐标，paperContent 的 CSS left 已被 MutationObserver 清除为 0）
+            const dt = data?.options?.designTarget
+            const isHF = typeof dt?.isHeaderOrFooter === 'function' && dt.isHeaderOrFooter()
+            const leftOffsetPx = isHF ? 0 : (h?.pt?.toPx?.(Number(panel?.leftOffset ?? cfgDef.leftOffset ?? 0)) ?? 0)
+            const rightOffsetPx = isHF ? 0 : (h?.pt?.toPx?.(Number(panel?.rightOffset ?? cfgDef.rightOffset ?? 0)) ?? 0)
+            const topOffsetPx = 0
+            const bottomOffsetPx = 0
             if (e.data.left < leftOffsetPx - diffLeft) {
               e.data.left = leftOffsetPx - diffLeft
             } else if (e.data.left >= paperW - elementW - rightOffsetPx + diffLeft) {
               e.data.left = paperW - elementW - rightOffsetPx + diffLeft
             }
-            // 上下边界钳位
             if (e.data.top < topOffsetPx - diffTop) {
               e.data.top = topOffsetPx - diffTop
             } else if (e.data.top >= paperH - elementH - bottomOffsetPx + diffTop) {
@@ -197,8 +348,6 @@ export function useHiprint() {
           if (origOnDrag.__deadZoneWrapped) return origOnDrag
           const wrapped = function (this: any, e: any, leftPt: any, topPt: any) {
             if (applyDeadZone(e)) return false
-            // 用修改后的 e.data.left/top 重新计算 leftPt/topPt，
-            // 确保 updateSizeAndPositionOptions 与 CSS 应用的是同一份坐标
             const data = $(e.data.target).data('hidraggable')
             if (data?.options) {
               leftPt = $.fn.dragLengthCNum(e.data.left, data.options)
@@ -210,14 +359,89 @@ export function useHiprint() {
           return wrapped
         }
 
-        // 1. 默认 onDrag（mouseRect、面板拖拽项等未自定义 onDrag 的实例）
+        /** 按 options 写回 CSS（取消 minMove 取整造成的视觉偏移） */
+        function restoreCssFromOptions(e: any): boolean {
+          const data = $(e.data.target).data('hidraggable')
+          const dt = data?.options?.designTarget
+          if (!dt?.designTarget || !dt.options) return false
+          try {
+            dt.designTarget.css('left', dt.options.displayLeft())
+            dt.designTarget.css('top', dt.options.displayTop())
+            return true
+          } catch {
+            return false
+          }
+        }
+
+        // mousedown 启动时 hidraggable 会立刻 minMove 取整写 CSS；同步起点并还原，避免按下抖动
+        function wrapOnStartDrag(origOnStartDrag: any) {
+          if (origOnStartDrag?.__deadZoneStartWrapped) return origOnStartDrag
+          const wrapped = function (this: any, e: any) {
+            if (e?.data) {
+              const data = $(e.data.target).data('hidraggable')
+              const dt = data?.options?.designTarget
+              const h = (window as any).hinnn
+              if (dt?.options && h?.pt?.toPx) {
+                try {
+                  const leftPx = h.pt.toPx(dt.options.getLeft?.() ?? dt.options.left ?? 0)
+                  const topPx = h.pt.toPx(dt.options.getTop?.() ?? dt.options.top ?? 0)
+                  e.data.startLeft = leftPx
+                  e.data.startTop = topPx
+                  e.data.left = leftPx
+                  e.data.top = topPx
+                } catch { /* ignore */ }
+              }
+              restoreCssFromOptions(e)
+            }
+            if (typeof origOnStartDrag === 'function') {
+              return origOnStartDrag.call(this, e)
+            }
+          }
+          wrapped.__deadZoneStartWrapped = true
+          return wrapped
+        }
+
+        // 未真正拖拽时 mouseup 仍会 minMove 取整，再还原一次
+        function wrapOnStopDrag(origOnStopDrag: any) {
+          if (!origOnStopDrag || origOnStopDrag.__deadZoneStopWrapped) return origOnStopDrag
+          const wrapped = function (this: any, e: any) {
+            if (e?.data && !e.data.__dzCrossed) {
+              if (!restoreCssFromOptions(e) && e.data) {
+                e.data.left = e.data.startLeft
+                e.data.top = e.data.startTop
+                try {
+                  $(e.data.target).css({
+                    left: e.data.startLeft,
+                    top: e.data.startTop,
+                  })
+                } catch { /* ignore */ }
+              }
+            }
+            return origOnStopDrag.call(this, e)
+          }
+          wrapped.__deadZoneStopWrapped = true
+          return wrapped
+        }
+
         const origDefaultsOnDrag = $.fn.hidraggable.defaults.onDrag
         $.fn.hidraggable.defaults.onDrag = wrapOnDrag(origDefaultsOnDrag)
+        const origDefaultsOnStart = $.fn.hidraggable.defaults.onStartDrag
+        $.fn.hidraggable.defaults.onStartDrag = wrapOnStartDrag(origDefaultsOnStart)
+        const origDefaultsOnStop = $.fn.hidraggable.defaults.onStopDrag
+        $.fn.hidraggable.defaults.onStopDrag = wrapOnStopDrag(origDefaultsOnStop)
 
-        // 2. .hidraggable() 入口拦截 opts.onDrag（print element 等自定义 onDrag 的实例）
         const newHidraggable = function (this: any, opts: any) {
-          if (typeof opts === 'object' && opts !== null && typeof opts.onDrag === 'function') {
-            opts.onDrag = wrapOnDrag(opts.onDrag)
+          if (typeof opts === 'object' && opts !== null) {
+            if (typeof opts.onDrag === 'function') {
+              opts.onDrag = wrapOnDrag(opts.onDrag)
+            }
+            // onStartDrag / onStopDrag 未传时走已包装的 defaults，无需再 stub
+            if (typeof opts.onStartDrag === 'function') {
+              opts.onStartDrag = wrapOnStartDrag(opts.onStartDrag)
+            }
+            if (typeof opts.onStopDrag === 'function') {
+              opts.onStopDrag = wrapOnStopDrag(opts.onStopDrag)
+            }
           }
           return origHidraggable.apply(this, arguments)
         }
@@ -241,6 +465,13 @@ export function useHiprint() {
     } catch (e) {
       console.error('PrintTemplate 创建失败:', e)
       return
+    }
+
+    // ── 历史栈：撤销/重做期间禁止再 push；Ctrl+Z 忽略键盘连发 ──
+    try {
+      applyHistoryGuards(hiprintTemplate.value)
+    } catch (e) {
+      console.warn('历史栈保护补丁失败:', e)
     }
 
     try {
@@ -298,12 +529,16 @@ export function useHiprint() {
           })
           // 存储以便后续拖拽框时能一起移动
           mr.mouseRectSelectedElement = els
-          // 单元素选中时触发属性面板更新
-          if (els.length === 1 && els[0].getPrintElementSelectEventKey) {
-            (window as any).hinnn?.event?.trigger(
-              els[0].getPrintElementSelectEventKey(),
-              { printElement: els[0] }
-            )
+          // 框选后 paper 的 click 会打开「画布/面板」属性；延迟再切回元素属性面板
+          // （含多选：用第一个元素的配置面板，批量改属性仍作用于全部已选同类型）
+          if (els.length >= 1 && els[0].getPrintElementSelectEventKey) {
+            const primary = els[0]
+            setTimeout(() => {
+              ;(window as any).hinnn?.event?.trigger(
+                primary.getPrintElementSelectEventKey(),
+                { printElement: primary },
+              )
+            }, 0)
           }
           // 框选多元素时，将焦点设置到容器以接收键盘事件
           if (els.length > 1) {
@@ -437,6 +672,14 @@ export function useHiprint() {
             e.preventDefault()
             e.stopPropagation()
             manualPaste(ep, tpl)
+          }
+        }
+        // Ctrl+A: 仅设计画布全选；预览/弹窗等界面不触发，并阻止整页全选
+        if ((e.ctrlKey || e.metaKey) && e.keyCode === 65) {
+          e.preventDefault()
+          e.stopPropagation()
+          if (isDesignSelectAllContext()) {
+            selectAllCanvasElements(ep)
           }
         }
         // Delete 键删除
@@ -618,6 +861,40 @@ export function useHiprint() {
         } catch {}
       }
 
+      /** Ctrl+A 仅在设计画布可用：无遮罩弹窗、设计区存在 */
+      function isDesignSelectAllContext(): boolean {
+        const wraps = document.querySelectorAll('.ant-modal-wrap')
+        for (let i = 0; i < wraps.length; i++) {
+          const el = wraps[i] as HTMLElement
+          const style = window.getComputedStyle(el)
+          if (style.display !== 'none' && style.visibility !== 'hidden') {
+            return false
+          }
+        }
+        return !!document.querySelector(containerSelector)
+      }
+
+      // Ctrl+A：全选当前面板画布元素（含表格）
+      function selectAllCanvasElements(ep: any) {
+        const $ = (window as any).$
+        const list = ep?.printElements
+        if (!list?.length) return
+        list.forEach(function (el: any) {
+          selectElement(el)
+          try {
+            const designTarget = el.designTarget?.[0]
+            if (!designTarget) return
+            const drag = $.data?.(designTarget, 'hidraggable')
+            drag?.options?.onBeforeSelectAllDrag?.call(designTarget, {})
+          } catch {}
+        })
+        // 焦点回到画布，便于继续 Ctrl+C / Delete 等操作
+        try {
+          const paper = ep.designPaper?.target || ep.target
+          paper?.focus?.()
+        } catch {}
+      }
+
       // ── 右键上下文菜单 ──
       let ctxMenuEl: HTMLElement | null = null
       function hideCtxMenu() {
@@ -754,6 +1031,12 @@ export function useHiprint() {
             }
             wasDragging = false
             dragStartPos = null
+
+            // 点表头列：交给 hiprint 的列属性（customOptionsInput），不要再触发无列配置的选中
+            if (target.closest('.hiprint-printElement-table thead td, .hiprint-printElement-table thead th')) {
+              return
+            }
+
             const tableEl = target.closest('.hiprint-printElement-table') as HTMLElement
             if (tableEl) {
               const $pt = (window as any).$
@@ -765,6 +1048,25 @@ export function useHiprint() {
               const btns = tableEl.querySelectorAll('.resizebtn')
               btns.forEach((b: any) => { b.style.display = '' })
             }
+
+            // 点到元素时确保属性面板是「元素配置」而不是画布空白面板
+            // （Ctrl 多选 / 框选后 paper click 容易抢成画布属性）
+            const elementEl = target.closest('.hiprint-printElement') as HTMLElement | null
+            if (!elementEl) return
+            const ep = hiprintTemplate.value?.editingPanel
+            if (!ep?.printElements) return
+            const el = ep.printElements.find((pe: any) => {
+              const dt = pe.designTarget
+              return dt && (dt[0] === elementEl || dt === elementEl)
+            })
+            if (el?.getPrintElementSelectEventKey) {
+              setTimeout(() => {
+                ;(window as any).hinnn?.event?.trigger(
+                  el.getPrintElementSelectEventKey(),
+                  { printElement: el },
+                )
+              }, 0)
+            }
           }, true)
           paperEl.addEventListener('mousedown', function (e: Event) {
             const me = e as MouseEvent
@@ -773,6 +1075,11 @@ export function useHiprint() {
             const target = e.target as HTMLElement
             const $pt = (window as any).$
             if (!$pt) return
+
+            // 表头列点击：不要在 mousedown 里抢先打开无「列」配置的面板
+            if (target.closest('.hiprint-printElement-table thead td, .hiprint-printElement-table thead th')) {
+              return
+            }
 
             const elementEl = target.closest('.hiprint-printElement') as HTMLElement | null
             if (!elementEl) {
@@ -856,6 +1163,17 @@ export function useHiprint() {
                 }
               }
             }
+            // 浮动叠层：盖在其它元素上，不锁拖拽；默认抬高层级
+            if (o === 'floatOverlay') {
+              if (v) {
+                if (this.options.zIndex == null || this.options.zIndex === '') {
+                  this.options.zIndex = 20
+                }
+                if (this.designTarget) {
+                  $(this.designTarget).css('z-index', this.options.zIndex)
+                }
+              }
+            }
           }
           // ── setResizePanel patch ──
           // 元素创建/刷新时，setResizePanel 会重建 resize handles，
@@ -873,10 +1191,65 @@ export function useHiprint() {
           }
 
           // submitOption 直接设置 options[e.name] = n，不经过 updateOption，
-          // 因此在 submitOption 完成后也需同步 fixed → draggable
+          // 因此在 submitOption 完成后也需同步 fixed → draggable。
+          // 多选时把常用「样式」属性同步到同类型已选元素并刷新画布（不含位置固定）。
+          // 注意：不要批量同步 border* —— 假表格各格去重边框不同，一改内边距会把四边实线扩散到同伴
+          const MULTI_BATCH_KEYS = [
+            'fontFamily',
+            'fontSize',
+            'fontWeight',
+            'letterSpacing',
+            'color',
+            'backgroundColor',
+            'textDecoration',
+            'textAlign',
+            'textContentVerticalAlign',
+            'textContentWrap',
+            'lineHeight',
+            'transform',
+            'zIndex',
+            'borderColor',
+            'borderWidth',
+            'contentPaddingLeft',
+            'contentPaddingTop',
+            'contentPaddingRight',
+            'contentPaddingBottom',
+          ]
+
+          function syncFixedDragState(el: any) {
+            if (!el) return
+            const shouldDrag = !el.options?.fixed && !el.options?.coordinateSync
+            el.options.draggable = shouldDrag
+            if (!el.designTarget) return
+            const $dt = $(el.designTarget)
+            try {
+              $dt.hidraggable('update', { draggable: shouldDrag })
+            } catch (_) { /* ignore */ }
+            $dt.attr('data-fixed', el.options.fixed ? 'true' : 'false')
+            const rp = $dt.find('.resize-panel')[0]
+            if (rp) {
+              rp.setAttribute('data-fixed', el.options.fixed ? 'true' : 'false')
+            }
+          }
+
           const origSubmitOption = proto.submitOption
           proto.submitOption = function (this: any) {
-            const wasFixed = this.options.fixed
+            // 提交前缓存选中列表（submit 中可能丢 selected）
+            const batchTargets = (this.panel?.printElements || []).filter((t: any) => {
+              if (String(t.printElementType?.type || '').includes('table')) return false
+              if (t.printElementType?.type !== this.printElementType?.type) return false
+              try {
+                const last = t.designTarget?.children?.()?.last?.()
+                return (
+                  last &&
+                  last.css('display') === 'block' &&
+                  last.hasClass('selected')
+                )
+              } catch {
+                return false
+              }
+            })
+
             // 收集 pristine color 对应的选项名（背景色/边框色默认 #000000 需拦截）
             const container = document.getElementById('PrintElementOptionSetting')
             const pristineOpts: string[] = []
@@ -889,30 +1262,64 @@ export function useHiprint() {
               })
             }
             origSubmitOption.call(this)
-            // 清除被误设为 #000000 的pristine颜色值，并重绘
+            // 清除被误设为 #000000 的 pristine 颜色（含多选同伴），避免写进历史后撤销变黑
             let needsRedraw = false
-            pristineOpts.forEach((name) => {
-              if (this.options[name] === '#000000' || this.options[name] === 'rgb(0,0,0)') {
-                this.options[name] = undefined
-                needsRedraw = true
-              }
-            })
-            if (needsRedraw) {
-              this.updateDesignViewFromOptions()
+            const clearPristineBlack = (el: any) => {
+              pristineOpts.forEach((name) => {
+                if (isDefaultBlackColor(el.options?.[name])) {
+                  el.options[name] = undefined
+                  needsRedraw = true
+                }
+              })
             }
-            // ── fixed / coordinateSync 控制拖拽锁定 ──
-            const shouldDrag = !this.options.fixed && !this.options.coordinateSync
-            this.options.draggable = shouldDrag
-            if (this.designTarget) {
-              const $dt = $(this.designTarget)
-              $dt.hidraggable('update', { draggable: shouldDrag })
-              $dt.attr('data-fixed', this.options.fixed ? 'true' : 'false')
-              const rp = $dt.find('.resize-panel')[0]
-              if (rp) {
-                rp.setAttribute('data-fixed', this.options.fixed ? 'true' : 'false')
-              }
+            clearPristineBlack(this)
+
+            // 多选批量样式（字体/颜色/对齐等）；位置固定不批量
+            const peers = batchTargets.filter((el: any) => el !== this)
+            if (peers.length > 0) {
+              peers.forEach((peer: any) => {
+                MULTI_BATCH_KEYS.forEach((key) => {
+                  // pristine 色值已在 this 上清空，同步 undefined，勿把 #000000 扩散
+                  peer.options[key] = this.options[key]
+                })
+                clearPristineBlack(peer)
+                try {
+                  peer.updateDesignViewFromOptions?.()
+                } catch (_) { /* ignore */ }
+              })
             }
 
+            if (needsRedraw) {
+              try {
+                this.updateDesignViewFromOptions()
+              } catch (_) { /* ignore */ }
+            }
+
+            // 假表格格：submit 可能写回面板里的「四边实线」，按格位去重
+            if (this.options?._tableLayoutCell) restoreTableCellBorders(this)
+
+            // ── fixed / coordinateSync 控制拖拽锁定（仅当前元素）──
+            syncFixedDragState(this)
+
+            if (this.options?.floatOverlay) {
+              if (this.options.zIndex == null || this.options.zIndex === '') {
+                this.options.zIndex = 20
+              }
+              if (this.designTarget) {
+                $(this.designTarget).css('z-index', this.options.zIndex)
+              }
+            }
+          }
+
+          // 刷新设计视图后恢复去重边框
+          if (!proto.__tableLayoutViewPatch) {
+            proto.__tableLayoutViewPatch = true
+            const origUpdateView = proto.updateDesignViewFromOptions
+            proto.updateDesignViewFromOptions = function (this: any) {
+              const ret = origUpdateView?.call(this)
+              if (this.options?._tableLayoutCell) applyTableCellBorderCss(this)
+              return ret
+            }
           }
         }
         return true
@@ -1014,9 +1421,9 @@ export function useHiprint() {
           const pw = hinnn.mm.toPt(panel.width)
           const ph = hinnn.mm.toPt(panel.height)
           const lo = Number(panel.leftOffset ?? 0)
-          const to = Number(panel.topOffset ?? 0)
+          const to = 0
           const ro = Number(panel.rightOffset ?? 0)
-          const bo = Number(panel.bottomOffset ?? 0)
+          const bo = 0
 
           // jQuery .css() 返回 px，转为 pt 与边界值（hinnn.mm.toPt）对齐
           const rawLeftPx = parseFloat($(dt).css('left')) || 0
@@ -1075,10 +1482,12 @@ export function useHiprint() {
 
         const panelWidthPt = hinnn.mm.toPt(panel.width)
         const panelHeightPt = hinnn.mm.toPt(panel.height)
-        const lo = Number(panel.leftOffset ?? 0)
-        const to = Number(panel.topOffset ?? 0)
-        const ro = Number(panel.rightOffset ?? 0)
-        const bo = Number(panel.bottomOffset ?? 0)
+        const isHF = typeof el.isHeaderOrFooter === 'function' && el.isHeaderOrFooter()
+        // 左右偏移硬限制；上/下边距允许拖入
+        const lo = isHF ? 0 : Number(panel.leftOffset ?? 0)
+        const to = 0
+        const ro = isHF ? 0 : Number(panel.rightOffset ?? 0)
+        const bo = 0
 
         let curLeft = left != null ? left : el.options.getLeft()
         let curTop = top != null ? top : el.options.getTop()
@@ -1177,10 +1586,12 @@ export function useHiprint() {
             if (panel && hinnn) {
               const pw = hinnn.mm.toPt(panel.width)
               const ph = hinnn.mm.toPt(panel.height)
-              const lo = Number(panel.leftOffset ?? 0)
-              const to = Number(panel.topOffset ?? 0)
-              const ro = Number(panel.rightOffset ?? 0)
-              const bo = Number(panel.bottomOffset ?? 0)
+              const isHF = typeof this.isHeaderOrFooter === 'function' && this.isHeaderOrFooter()
+              // 左右偏移硬限制；上/下边距允许拖入
+              const lo = isHF ? 0 : Number(panel.leftOffset ?? 0)
+              const to = 0
+              const ro = isHF ? 0 : Number(panel.rightOffset ?? 0)
+              const bo = 0
               if (t != null && t < lo) t = lo
               if (e != null && e < to) e = to
               // resize 时钳位宽/高
@@ -1298,17 +1709,6 @@ export function useHiprint() {
           panel.rightOffset = panel.rightOffset ?? defaults?.rightOffset ?? 0
           panel.bottomOffset = panel.bottomOffset ?? defaults?.bottomOffset ?? 0
 
-          if (!panel.__entityPatched) {
-            panel.__entityPatched = true
-            const orig = panel.getPanelEntity.bind(panel)
-            panel.getPanelEntity = function (m: any) {
-              const e = orig(m)
-              e.rightOffset = panel.rightOffset
-              e.bottomOffset = panel.bottomOffset
-              return e
-            }
-          }
-
           if (panel.target && !panel.__clickIntercepted) {
             panel.__clickIntercepted = true
             $(panel.target).on('click.hiprint-patch', () => {
@@ -1317,29 +1717,55 @@ export function useHiprint() {
           }
         })
 
-        // submit 保存 rightOffset / bottomOffset
+        // submit 保存 rightOffset / bottomOffset（面板 + store）
         const hinnn = (window as any).hinnn
         if (hinnn?.event && !(template as any).__evtPatched) {
           ;(template as any).__evtPatched = true
           hinnn.event.on('BuildCustomOptionSettingEventKey_' + template.id, (eventData: any) => {
             const cb = eventData.callback
             eventData.callback = function (values: any) {
-              // 检测纸张方向变化：orient 从 1(纵向) 变为 2(横向) 或反之时，交换画布宽高
+              // 纸张方向：只切换单页纸宽，保持总高度
               const p = (window as any).__activePanel
-              if (p && values.orient != null && values.orient !== p.orient) {
-                const oldOrient = p.orient || 1
-                const newOrient = values.orient
-                // 只有纵向↔横向切换时才旋转
-                if ((oldOrient === 1 && newOrient === 2) || (oldOrient === 2 && newOrient === 1)) {
-                  // 先更新 orient，再调用 rotatePaper 交换宽高
-                  p.orient = newOrient
-                  hiprintTemplate.value?.rotatePaper()
+              if (p && values.orient != null) {
+                const oldOrient = p.orient == null || p.orient === '' ? 1 : Number(p.orient)
+                const newOrient = Number(values.orient)
+                if (
+                  (oldOrient === 1 || oldOrient === 2) &&
+                  (newOrient === 1 || newOrient === 2) &&
+                  oldOrient !== newOrient
+                ) {
+                  const store = useDesignerStore()
+                  applyPanelPaperOrient(p, newOrient, store.paperType)
+                  const sp = store.template.panels[0] as any
+                  if (sp) {
+                    sp.width = p.width
+                    sp.height = p.height
+                    sp.orient = p.orient
+                    sp.paperHeader = p.paperHeader
+                    sp.paperFooter = p.paperFooter
+                    if (p.paperNumberTop != null) sp.paperNumberTop = p.paperNumberTop
+                  }
+                  try {
+                    hinnn.event.trigger(
+                      'hiprintTemplateDataChanged_' + template.id,
+                      '调整大小',
+                    )
+                  } catch {}
+                  setZoom(store.zoom)
                 }
               }
               cb(values)
               if (p) {
                 if (values.rightOffset != null) p.rightOffset = values.rightOffset
                 if (values.bottomOffset != null) p.bottomOffset = values.bottomOffset
+                const store = useDesignerStore()
+                const sp = store.template.panels[0] as any
+                if (sp) {
+                  if (values.rightOffset != null) sp.rightOffset = values.rightOffset
+                  if (values.bottomOffset != null) sp.bottomOffset = values.bottomOffset
+                  if (values.leftOffset != null) sp.leftOffset = values.leftOffset
+                  if (values.topOffset != null) sp.topOffset = values.topOffset
+                }
               }
             }
           })
@@ -1391,6 +1817,10 @@ export function useHiprint() {
       document.removeEventListener('contextmenu', contextMenuHandler, true)
       contextMenuHandler = null
     }
+    if (historyKeyDownGuard) {
+      document.removeEventListener('keydown', historyKeyDownGuard, true)
+      historyKeyDownGuard = null
+    }
     if (hiprintTemplate.value) {
       hiprintTemplate.value.destroy()
       hiprintTemplate.value = null
@@ -1408,10 +1838,6 @@ export function useHiprint() {
 
   function setPaper(type: string, width: number, height: number) {
     hiprintTemplate.value?.setPaper(type, { width, height })
-  }
-
-  function rotatePaper() {
-    hiprintTemplate.value?.rotatePaper()
   }
 
   function setZoom(scale: number) {
@@ -1453,7 +1879,6 @@ export function useHiprint() {
     print,
     toPdf,
     setPaper,
-    rotatePaper,
     setZoom,
     updateTemplate,
   }

@@ -437,10 +437,6 @@ font-weight: normal;*/
     transform: translateZ(0);
 }
 
-.hiprint-option-item-deleteBtn {
-    background: red;
-}
-
 .hiprint-option-items .minicolors {
     position: relative;
 }

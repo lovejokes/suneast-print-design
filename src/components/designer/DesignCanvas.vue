@@ -5,7 +5,6 @@
       class="design-container"
       ref="designContainerRef"
     ></div>
-    <!-- 拖拽手柄 -->
     <div
       class="resize-handle"
       :class="{ dragging: isDragging }"
@@ -16,14 +15,17 @@
       <span class="resize-handle-label resize-handle-label--hint">拖动调整高度</span>
       <div class="resize-handle-bar"></div>
     </div>
-    <!-- 拖拽预览线 -->
+    <div v-if="isDragging" class="resize-drag-mask"></div>
     <div
       v-if="isDragging"
       class="drag-preview-line"
       :style="{ bottom: previewLineBottom + 'px' }"
     >
       <span class="drag-preview-label">
-        {{ previewHeight }} mm（{{ previewPages }}页）
+        保留 {{ previewHeight }} mm
+        <template v-if="previewHeight < canvasHeight">
+          · 下方 {{ cutCount }} 个元素将被删除
+        </template>
       </span>
     </div>
   </main>
@@ -35,8 +37,6 @@ import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
 const props = defineProps<{
   canvasHeight: number
   paperHeight: number
-  paperHeader?: number
-  paperFooter?: number
 }>()
 
 const emit = defineEmits<{
@@ -50,17 +50,15 @@ const designContainerRef = ref<HTMLElement>()
 const isDragging = ref(false)
 const previewLineBottom = ref(0)
 const previewHeight = ref(0)
-const previewPages = ref(1)
-let dragStartY = 0
-let dragStartHeight = 0
+const cutCount = ref(0)
 let highlightedElements: HTMLElement[] = []
+let dragStartClientY = 0
+let dragStartHeightMm = 0
+let dragPxPerMm = 3.78
 
 // hiprint 在 onBeforeDrag / selectEnd / mouseRect 等处调用原生 .focus()，
 // 浏览器默认会把焦点元素滚动到视口内，导致拖拽时画布跳到顶部。
-// 对设计容器内的元素强制 preventScroll: true，从源头阻断此行为。
 let origFocus: ((this: HTMLElement, options?: FocusOptions) => void) | null = null
-
-// ── 页面边界线 ──
 
 let boundaryObserver: MutationObserver | null = null
 
@@ -68,10 +66,7 @@ function injectBoundaryLines() {
   const paper = designContainerRef.value?.querySelector('.hiprint-printPaper.design') as HTMLElement
   if (!paper) return
 
-  // 先断开 observer，避免 DOM 修改触发自身导致死循环
   boundaryObserver?.disconnect()
-
-  // 清除旧边界线
   paper.querySelectorAll('.canvas-page-boundary').forEach((el) => el.remove())
 
   const pageCount = Math.floor(props.canvasHeight / props.paperHeight)
@@ -91,7 +86,6 @@ function injectBoundaryLines() {
     paper.appendChild(line)
   }
 
-  // 重新挂载 observer
   setupBoundaryObserver()
 }
 
@@ -109,105 +103,141 @@ watch([() => props.canvasHeight, () => props.paperHeight], () => {
   nextTick(injectBoundaryLines)
 })
 
-// ── Ctrl + 滚轮缩放 ──
-
 function onWheel(e: WheelEvent) {
   if (!e.ctrlKey && !e.metaKey) return
   e.preventDefault()
-  const direction = e.deltaY < 0 ? 'in' : 'out'
-  emit('zoom', direction)
+  emit('zoom', e.deltaY < 0 ? 'in' : 'out')
 }
 
-// ── 拖拽手柄 ──
+function getPaperEl(): HTMLElement | null {
+  return (
+    (designContainerRef.value?.querySelector(
+      '.hiprint-printPaper.design',
+    ) as HTMLElement | null) || null
+  )
+}
+
+function getPxPerMm(): number {
+  const paper = getPaperEl()
+  if (paper && props.canvasHeight > 0) {
+    const h = paper.getBoundingClientRect().height
+    if (h > 0) return h / props.canvasHeight
+  }
+  return 96 / 25.4
+}
+
+function mmToPt(mm: number): number {
+  const hinnn = (window as any).hinnn
+  if (hinnn?.mm?.toPt) return hinnn.mm.toPt(mm)
+  return (mm * 72) / 25.4
+}
+
+function setPreviewLineBottom(areaRect: DOMRect, cutClientY: number) {
+  previewLineBottom.value = Math.max(
+    0,
+    Math.min(areaRect.height, areaRect.bottom - cutClientY),
+  )
+}
+
+/** 从底部向上拖：按位移连续减少保留高度；红线对齐纸面裁剪位置 */
+function updateDragPreview(clientY: number) {
+  if (!canvasAreaRef.value) return
+  const areaRect = canvasAreaRef.value.getBoundingClientRect()
+  if (!areaRect.height) return
+
+  const deltaPx = dragStartClientY - clientY
+  const newHeight = Math.max(
+    props.paperHeight,
+    Math.round((dragStartHeightMm - deltaPx / dragPxPerMm) * 10) / 10,
+  )
+  previewHeight.value = newHeight
+
+  const paper = getPaperEl()
+  if (paper && props.canvasHeight > 0) {
+    const paperRect = paper.getBoundingClientRect()
+    const pxPerMm = paperRect.height / props.canvasHeight
+    if (pxPerMm > 0) {
+      setPreviewLineBottom(areaRect, paperRect.top + newHeight * pxPerMm)
+    } else {
+      setPreviewLineBottom(areaRect, clientY)
+    }
+  } else {
+    setPreviewLineBottom(areaRect, clientY)
+  }
+
+  cutCount.value = highlightCutElements(newHeight)
+}
 
 function onHandleMouseDown(e: MouseEvent) {
   if (e.button !== 0) return
   isDragging.value = true
-  dragStartY = e.clientY
-  dragStartHeight = props.canvasHeight
+  dragStartClientY = e.clientY
+  dragStartHeightMm = props.canvasHeight
+  dragPxPerMm = Math.max(0.5, getPxPerMm())
+  previewHeight.value = props.canvasHeight
+  cutCount.value = 0
   highlightedElements = []
 
-  document.addEventListener('mousemove', onMouseMove)
-  document.addEventListener('mouseup', onMouseUp)
+  if (canvasAreaRef.value) {
+    setPreviewLineBottom(canvasAreaRef.value.getBoundingClientRect(), e.clientY)
+  }
+
+  document.addEventListener('mousemove', onMouseMove, true)
+  document.addEventListener('mouseup', onMouseUp, true)
   e.preventDefault()
+  e.stopPropagation()
 }
 
 function onMouseMove(e: MouseEvent) {
-  if (!isDragging.value || !canvasAreaRef.value) return
-
-  const containerRect = canvasAreaRef.value.getBoundingClientRect()
-  const handleY = e.clientY - containerRect.top
-  // 手柄距离底部的距离
-  const distFromTop = handleY
-  // 计算比例：容器高度对应画布高度
-  const areaHeight = containerRect.height
-  if (!areaHeight) return
-
-  // 拖拽位置映射到画布高度（mm）
-  const ratio = distFromTop / areaHeight
-  const rawHeight = Math.round(ratio * props.canvasHeight)
-  // 贴靠到最近的纸张边界
-  const snapped = snapToPage(rawHeight)
-  const newHeight = Math.max(props.paperHeight, snapped)
-
-  previewHeight.value = newHeight
-  previewPages.value = Math.round(newHeight / props.paperHeight)
-  // 预览线位置（从容器底部算）
-  previewLineBottom.value = areaHeight * (1 - ratio)
-
-  // 高亮被裁剪的元素
-  highlightCutElements(newHeight)
+  if (!isDragging.value) return
+  e.preventDefault()
+  updateDragPreview(e.clientY)
 }
 
-function onMouseUp(_e: MouseEvent) {
-  document.removeEventListener('mousemove', onMouseMove)
-  document.removeEventListener('mouseup', onMouseUp)
-
+function onMouseUp(e: MouseEvent) {
+  document.removeEventListener('mousemove', onMouseMove, true)
+  document.removeEventListener('mouseup', onMouseUp, true)
   if (!isDragging.value) return
-  isDragging.value = false
 
+  updateDragPreview(e.clientY)
+  isDragging.value = false
+  const newHeight = previewHeight.value
   clearHighlights()
 
-  const newHeight = previewHeight.value
-  if (newHeight && newHeight !== props.canvasHeight && newHeight >= props.paperHeight) {
+  if (
+    newHeight &&
+    Math.abs(newHeight - props.canvasHeight) >= 0.5 &&
+    newHeight >= props.paperHeight
+  ) {
     emit('resizeCanvas', newHeight)
   }
 }
 
-function snapToPage(height: number): number {
-  // 向最近的纸张高度倍数贴靠
-  const ph = props.paperHeight
-  const pages = Math.round(height / ph)
-  return Math.max(1, pages) * ph
-}
-
-// ── 裁剪元素高亮 ──
-
-function highlightCutElements(newHeight: number) {
+function highlightCutElements(newHeightMm: number): number {
   clearHighlights()
+  if (newHeightMm >= props.canvasHeight - 0.05) return 0
+
+  const cutPt = mmToPt(newHeightMm)
+  let count = 0
   const designEls = designContainerRef.value?.querySelectorAll('.hiprint-printElement') || []
   designEls.forEach((el) => {
     const htmlEl = el as HTMLElement
-    const top = parseFloat(htmlEl.style.top || '0')
-    if (top >= newHeight) {
-      // 红色闪烁边框
-      const resizePanel = htmlEl.querySelector('.resize-panel') as HTMLElement
-      if (resizePanel) {
-        resizePanel.classList.add('will-be-cut')
-        highlightedElements.push(resizePanel)
-      }
-    }
+    const topPt = parseFloat(htmlEl.style.top || '')
+    if (!Number.isFinite(topPt) || topPt < cutPt) return
+
+    const target =
+      (htmlEl.querySelector('.resize-panel') as HTMLElement | null) || htmlEl
+    target.classList.add('will-be-cut')
+    highlightedElements.push(target)
+    count++
   })
+  return count
 }
 
 function clearHighlights() {
   highlightedElements.forEach((el) => el.classList.remove('will-be-cut'))
   highlightedElements = []
 }
-
-// ── 表格选中效果 ──
-// hiprint 对 noContainer 表格不会创建 .resize-panel，triggerResize 无法添加 selected 类
-// 通过捕获阶段监听 click 手动管理选中态的视觉反馈
 
 function onTableSelect(e: MouseEvent) {
   const target = e.target as HTMLElement
@@ -226,15 +256,12 @@ function onTableSelect(e: MouseEvent) {
   }
 }
 
-// ── lifecycle ──
-
 onMounted(() => {
   nextTick(() => {
     injectBoundaryLines()
     setupBoundaryObserver()
   })
 
-  // 安装 focus preventScroll 补丁：设计容器内的元素聚焦时不再触发浏览器滚动
   const container = designContainerRef.value
   if (container && !origFocus) {
     origFocus = HTMLElement.prototype.focus
@@ -247,9 +274,6 @@ onMounted(() => {
     }
   }
 
-  // hiprint 内部多处 .focus() 会触发浏览器滚动到中间。
-  // MutationObserver（微任务）可能早于 focus 引起的 scroll 完成，
-  // 因此用 rAF + setTimeout 推迟到下一帧之后强制置顶。
   if (container) {
     let attempts = 0
     const forceTop = () => {
@@ -261,10 +285,7 @@ onMounted(() => {
     requestAnimationFrame(() => setTimeout(forceTop, 100))
   }
 
-  // 表格元素选中效果：hiprint 的 triggerResize 对 noContainer 表格不会添加 selected 类
   designContainerRef.value?.addEventListener('click', onTableSelect, true)
-
-  // Ctrl + 滚轮缩放
   canvasAreaRef.value?.addEventListener('wheel', onWheel, { passive: false })
 })
 
@@ -276,8 +297,8 @@ onUnmounted(() => {
   boundaryObserver?.disconnect()
   designContainerRef.value?.removeEventListener('click', onTableSelect, true)
   canvasAreaRef.value?.removeEventListener('wheel', onWheel)
-  document.removeEventListener('mousemove', onMouseMove)
-  document.removeEventListener('mouseup', onMouseUp)
+  document.removeEventListener('mousemove', onMouseMove, true)
+  document.removeEventListener('mouseup', onMouseUp, true)
 })
 </script>
 
@@ -300,13 +321,9 @@ onUnmounted(() => {
   align-items: center;
   justify-content: flex-start;
   overflow-anchor: none;
-  /* flex item 默认 min-height: auto 会阻止元素小于内容高度，
-     导致内容溢出发生在父容器（被其 overflow:hidden 裁剪）而非本元素，
-     滚动条无法出现 */
   min-height: 0;
 }
 
-/* ── 拖拽手柄 ── */
 .resize-handle {
   display: flex;
   align-items: center;
@@ -358,7 +375,14 @@ onUnmounted(() => {
   color: var(--brand-500);
 }
 
-/* ── 拖拽预览线 ── 13 25 30 32 33 */
+.resize-drag-mask {
+  position: absolute;
+  inset: 0;
+  z-index: 98;
+  cursor: ns-resize;
+  background: rgba(24, 144, 255, 0.06);
+}
+
 .drag-preview-line {
   position: absolute;
   left: 0;
@@ -383,7 +407,6 @@ onUnmounted(() => {
 </style>
 
 <style>
-/* 隐藏画布左边与顶部的刻度尺 */
 #hiprint-printTemplate .hiprint_rul_wrapper {
   display: none !important;
 }
@@ -398,8 +421,6 @@ onUnmounted(() => {
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
-  /* 不能用 visible：会覆盖 .design-container 的 overflow: auto，
-     导致长内容被父容器 .canvas-area 的 overflow: hidden 裁剪而无法滚动 */
   overflow: auto;
   margin: 0 auto;
   min-width: 100%;
@@ -427,28 +448,27 @@ onUnmounted(() => {
   border: 1px dashed rgba(170, 170, 170, 0.7);
   position: relative;
   margin: 0 auto;
+  /* hiprint 给纸张设了 tabindex，点击空白会 focus；去掉浏览器默认黑色焦点框 */
+  outline: none;
 }
 
-/* hiprint-printPanel 适应内部缩放后的内容，overflow: hidden 约束拖拽不溢出 */
+#hiprint-printTemplate .hiprint-printPaper.design:focus,
+#hiprint-printTemplate .hiprint-printPaper.design:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
 #hiprint-printTemplate .hiprint-printPanel {
   margin: 0 auto;
   overflow: hidden;
-  /* 本元素是 #hiprint-printTemplate（flex column）的 flex item。
-     overflow: hidden 会让 min-height: auto 解析为 0（CSS 规范），
-     默认 flex-shrink: 1 会让 panel 被压缩到比 paper 小，
-     paper 被 overflow:hidden 裁剪，父容器看不到溢出，滚动条不出现。
-     加 flex-shrink: 0 阻止压缩，panel 保持 paper 尺寸，
-     溢出发生在父容器 #hiprint-printTemplate 上，触发其 overflow:auto 滚动条。 */
   flex-shrink: 0;
 }
 
-/* hover 时去黑色遮罩 */
 #hiprint-printTemplate .hiprint-printElement:not(.editing):hover .resize-panel {
   display: block !important;
   background-color: transparent !important;
 }
 
-/* 选中元素：蓝色虚线边框 */
 #hiprint-printTemplate .hiprint-printElement .resize-panel.selected {
   border: 2px dashed var(--selection-color, #1890ff) !important;
   background-color: transparent !important;
@@ -462,8 +482,8 @@ onUnmounted(() => {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25) !important;
 }
 
-/* 将被裁剪的元素：红色闪烁 */
-#hiprint-printTemplate .hiprint-printElement .resize-panel.will-be-cut {
+#hiprint-printTemplate .hiprint-printElement .resize-panel.will-be-cut,
+#hiprint-printTemplate .hiprint-printElement.will-be-cut {
   border: 2px solid #ff4d4f !important;
   animation: cut-blink 0.4s ease-in-out infinite alternate;
 }
@@ -473,35 +493,29 @@ onUnmounted(() => {
   to { opacity: 0.3; }
 }
 
-/* 缩放拖拽时保留宽高显示 */
 #hiprint-printTemplate .resize-panel .size-box.hide {
   display: block !important;
 }
 
-/* 整表可拖动，隐藏左上角拖拽色块 */
 #hiprint-printTemplate .hiprint-printElement-table-handle {
   display: none !important;
 }
 
-/* 表格选中效果：hiprint 对 noContainer 表格不会创建 .resize-panel */
 #hiprint-printTemplate .hiprint-printElement-table.table-selected {
   border: 2px dashed var(--selection-color, #1890ff);
 }
 
-/* 网格线：使用 CSS 变量动态调整，确保缩放时可见 */
 #hiprint-printTemplate .hiprint-printPaper.design.grid {
   background-image: linear-gradient(90deg, rgba(0, 0, 0, 0.1) 3%, rgba(0, 0, 0, 0) 3%), linear-gradient(360deg, rgba(0, 0, 0, 0.1) 3%, rgba(0, 0, 0, 0) 3%);
   background-size: var(--grid-size, 5mm) var(--grid-size, 5mm);
   background-position: left top;
 }
 
-/* 表头选中行：黑色文字，移除深蓝色背景 */
 #hiprint-printTemplate .hitable .selected {
   background: #e9e9e9 !important;
   color: #000 !important;
 }
 
-/* 表格编辑框：绝对定位铺满 td */
 #hiprint-printTemplate .hitable td {
   position: relative;
 }
@@ -515,38 +529,31 @@ onUnmounted(() => {
   box-sizing: border-box;
 }
 
-/* ── 锁定元素：隐藏 resize 控制点 ── */
 #hiprint-printTemplate .hiprint-printElement[data-fixed="true"] .resizebtn,
 #hiprint-printTemplate .resize-panel[data-fixed="true"] .resizebtn {
   display: none !important;
 }
 
-/* ── 表格边框美化：使用浅灰色替代默认黑色 ── */
 #hiprint-printTemplate .hiprint-printElement-table table {
-  border-color: #d9d9d9 !important;
+  border-color: #000 !important;
 }
 #hiprint-printTemplate .hiprint-printElement-table th {
-  border-color: #d9d9d9 !important;
+  border-color: #000 !important;
   color: #000 !important;
   font-weight: 600 !important;
 }
 #hiprint-printTemplate .hiprint-printElement-table td {
-  border-color: #d9d9d9 !important;
+  border-color: #000 !important;
 }
 
-/* 表格整体轻微圆角 + 阴影 */
 #hiprint-printTemplate .hiprint-printElement-table table.hiprint-printElement-tableTarget {
   border-radius: 2px;
 }
 
-/* 表头浅灰背景 */
 #hiprint-printTemplate .hiprint-printElement-table thead th {
   background: #f5f5f5 !important;
 }
 
-/* 表格行 hover 效果已取消：设计/预览模式下 tbody tr 悬停保持原有样式不变 */
-
-/* 表格空单元格显示字段占位符：<td field="NAME"> → 显示 @NAME */
 #hiprint-printTemplate .hiprint-printElement-table td[field]:not([field=""]):empty::after {
   content: '@' attr(field);
   color: #999;

@@ -20,7 +20,10 @@ export default function (hiprint) {
             tid: "defaultModule.longText",
             title: "文本域",
             data: "155123456789",
-            type: "longText"
+            type: "longText",
+            options: {
+              height: 18
+            }
           },
           {
             tid: "defaultModule.table",
