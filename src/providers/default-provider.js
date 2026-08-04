@@ -9,6 +9,9 @@ export default function (hiprint) {
             text: '文本',
             data: '',
             type: 'text',
+            options: {
+              lineHeight: 15,
+            },
           },
           {
             tid: 'defaultModule.image',
