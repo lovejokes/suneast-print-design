@@ -1,0 +1,150 @@
+{
+  "panels": [
+    {
+      "index": 0,
+      "name": 1,
+      "height": 50,
+      "width": 100,
+      "paperHeader": 0,
+      "paperFooter": 133.5,
+      "printElements": [
+        {
+          "options": {
+            "left": 13.5,
+            "top": 29.616141732283467,
+            "height": 82.5,
+            "width": 82.5,
+            "qrcodeType": "qrcode",
+            "testData": "qrcode",
+            "field": "orderNo",
+            "qrCodeLevel": 0,
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "fontSize": 9,
+            "draggable": true,
+            "right": 80,
+            "bottom": 101.25,
+            "vCenter": 38.75,
+            "hCenter": 60,
+            "title": "二维码",
+            "backgroundColor": ""
+          },
+          "printElementType": {
+            "type": "qrcode"
+          }
+        },
+        {
+          "options": {
+            "left": 103.5,
+            "top": 28.5,
+            "height": 20,
+            "width": 167.46456692913387,
+            "lineHeight": 19.5,
+            "right": 258.96456692913387,
+            "bottom": 44.75,
+            "vCenter": 175.23228346456693,
+            "hCenter": 34.75,
+            "field": "orderNo",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "draggable": true,
+            "fontSize": 14.5,
+            "fontWeight": "bold",
+            "color": "#000000",
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 103.5,
+            "top": 55.5,
+            "height": 20,
+            "width": 167.46456692913387,
+            "lineHeight": 18,
+            "right": 270.96456692913387,
+            "bottom": 75.5,
+            "vCenter": 187.23228346456693,
+            "hCenter": 65.5,
+            "field": "supplier",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "draggable": true,
+            "fontSize": 10,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 103.5,
+            "top": 78,
+            "height": 20,
+            "width": 167.46456692913387,
+            "lineHeight": 18,
+            "right": 262.71456692913387,
+            "bottom": 89.75,
+            "vCenter": 178.98228346456693,
+            "hCenter": 79.75,
+            "field": "address",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "draggable": true,
+            "fontSize": 10,
+            "backgroundColor": "",
+            "borderColor": ""
+          },
+          "printElementType": {
+            "type": "text"
+          }
+        },
+        {
+          "options": {
+            "left": 103.5,
+            "top": 97.5,
+            "height": 20,
+            "width": 167.46456692913387,
+            "lineHeight": 18,
+            "right": 294.17913385826773,
+            "bottom": 105.74999999999999,
+            "vCenter": 210.4468503937008,
+            "hCenter": 95.74999999999999,
+            "field": "date",
+            "coordinateSync": false,
+            "widthHeightSync": false,
+            "draggable": true,
+            "fontSize": 10.75
+          },
+          "printElementType": {
+            "type": "text"
+          }
+        }
+      ],
+      "paperNumberLeft": 19.5,
+      "paperNumberTop": 84,
+      "paperNumberDisabled": true,
+      "paperNumberContinue": true,
+      "topOffset": 10,
+      "leftOffset": 10,
+      "rightOffset": 10,
+      "bottomOffset": 10,
+      "watermarkOptions": {
+        "content": "日东打印",
+        "rotate": 25,
+        "timestamp": true,
+        "format": "YYYY-MM-DD HH:mm",
+        "fillStyle": "rgba(184, 184, 184, 0.3)",
+        "fontSize": "14px",
+        "width": 200,
+        "height": 200
+      },
+      "panelLayoutOptions": {}
+    }
+  ]
+}

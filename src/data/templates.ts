@@ -12,6 +12,7 @@
 import type { PanelTemplate } from '@/stores/designer'
 import salesContract from '../../docs/templates/sales-contract.json'
 import template2 from '../../docs/templates/template2.json'
+import template3 from '../../docs/templates/template3.json'
 
 export interface TemplateDef {
   id: string
@@ -38,6 +39,13 @@ const jsonTemplates: TemplateDef[] = [
     description: '采购订单布局（docs/templates/template2.json）',
     paperType: 'A4',
     template: template2 as PanelTemplate,
+  },
+  {
+    id: 'template3',
+    name: '标签打印',
+    description: '100×50mm 标签，含二维码与订单信息（docs/templates/template3.json）',
+    paperType: 'A4',
+    template: template3 as PanelTemplate,
   },
 ]
 
