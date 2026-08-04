@@ -480,6 +480,73 @@ function yieldToUi(): Promise<void> {
   })
 }
 
+/** 尝试用 canvas 直读图片（需要服务器返回 CORS 头），失败返回空串 */
+function readImageViaCanvas(src: string): Promise<string> {
+  return new Promise((resolve) => {
+    const image = new Image()
+    image.crossOrigin = 'anonymous'
+    image.onload = () => {
+      try {
+        const canvas = document.createElement('canvas')
+        canvas.width = image.naturalWidth
+        canvas.height = image.naturalHeight
+        const ctx = canvas.getContext('2d')
+        if (ctx) {
+          ctx.drawImage(image, 0, 0)
+          resolve(canvas.toDataURL('image/png'))
+        } else {
+          resolve('')
+        }
+      } catch {
+        // canvas 被 CORS 污染，读不到像素
+        resolve('')
+      }
+    }
+    image.onerror = () => resolve('')
+    image.src = src
+  })
+}
+
+/** 无 CORS 头的外部图片：走同源服务端代理拿字节转 base64（绕过浏览器 CORS） */
+async function readImageViaProxy(src: string): Promise<string> {
+  try {
+    const res = await fetch('/api/img-proxy?url=' + encodeURIComponent(src))
+    if (!res.ok) return ''
+    const blob = await res.blob()
+    return await new Promise<string>((resolve) => {
+      const fr = new FileReader()
+      fr.onload = () => resolve(String(fr.result || ''))
+      fr.onerror = () => resolve('')
+      fr.readAsDataURL(blob)
+    })
+  } catch {
+    return ''
+  }
+}
+
+/** 将 paper 中所有图片预处理，避免 html2canvas 无法捕获 */
+async function preloadImagesToBase64(paper: HTMLElement): Promise<void> {
+  const imgs = Array.from(paper.querySelectorAll('img')) as HTMLImageElement[]
+  const tasks = imgs.map(async (img) => {
+    // 清除 hiprint 设置的 content:url() CSS，让 html2canvas 走 src 属性
+    img.style.removeProperty('content')
+
+    const src = img.getAttribute('src') || ''
+    if (!src || src.startsWith('data:')) return
+
+    // 优先：CORS 直读（服务器返回 Access-Control-Allow-Origin）
+    const dataUrl = await readImageViaCanvas(src)
+    if (dataUrl) {
+      img.setAttribute('src', dataUrl)
+      return
+    }
+    // 兜底：同源服务端代理（无 CORS 头的外部图片）
+    const proxied = await readImageViaProxy(src)
+    if (proxied) img.setAttribute('src', proxied)
+  })
+  await Promise.all(tasks)
+}
+
 /** 按页截图生成 PDF（跨环境更接近预览所见） */
 export async function exportPreviewPapersToImagePdf(
   container: HTMLElement,
@@ -513,6 +580,9 @@ export async function exportPreviewPapersToImagePdf(
     paper.scrollIntoView({ block: 'nearest', inline: 'nearest' })
     await yieldToUi()
 
+    // 预加载图片为 base64，防止 html2canvas 超时或跨域导致图片丢失
+    await preloadImagesToBase64(paper)
+
     try {
       const canvas = await html2canvas(paper, {
         scale: 1.5,
@@ -520,7 +590,6 @@ export async function exportPreviewPapersToImagePdf(
         allowTaint: true,
         backgroundColor: '#ffffff',
         logging: false,
-        imageTimeout: 1500,
       })
       const dataUrl = canvas.toDataURL('image/jpeg', 0.88)
       if (i > 0) pdf.addPage([w, h], orientation)

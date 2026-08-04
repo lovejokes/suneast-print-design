@@ -548,6 +548,8 @@ function paperHasMovableContent(paper: HTMLElement, pageHeight: number): boolean
     if (el.classList.contains('hiprint_rul_wrapper')) return false
     if (el.hasAttribute('data-print-wrapper')) return false
     if (isPageHeaderEl(el)) return false
+    // 浮动叠层不视为正文残留：正文搬空后仅剩浮动层（如公章）时页应判为可删
+    if (el.getAttribute('data-page-overlay') === '1') return false
     const cs = window.getComputedStyle(el)
     if (cs.position !== 'absolute' && cs.position !== 'fixed') return false
     if (isFooterBandEl(el, paper, pageHeight)) return false
@@ -718,6 +720,18 @@ function compactOverflowPageBlanks(container: HTMLElement, pageHeight: number): 
         }
 
         if (!paperHasMovableContent(srcPaper, pageHeight)) {
+          // 正文被搬空后若仅余浮动叠层（公章等），随正文一起迁到目标页，
+          // 否则浮动层会孤悬在被删空页上，跑到文档末尾。
+          const orphans = Array.from(
+            srcPaper.querySelectorAll('[data-page-overlay="1"]'),
+          ) as HTMLElement[]
+          if (orphans.length) {
+            const dest = getPaperAppendTarget(target)
+            orphans.forEach((el) => {
+              if (el.parentElement) el.parentElement.removeChild(el)
+              dest.appendChild(el)
+            })
+          }
           srcPaper.remove()
         } else if (moved) {
           compactPaperContentUp(srcPaper, pageHeight)

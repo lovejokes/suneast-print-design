@@ -494,11 +494,11 @@ export function splitTallPanels(panels: any[], paperHeight: number): any[] {
           }
           if (top < 0) top = 0
 
+          type FloatAnchor = { absTop: number; left: number; title: string }
           // 记录相对最近正文的设计偏移，供 getHtml/分页后贴齐
-          let anchor: { absTop: number; left: number; title: string } | null =
-            null
+          let anchor: FloatAnchor | null = null
           let bestDist = Infinity
-          let bestOverlap: typeof anchor = null
+          let bestOverlap: FloatAnchor | null = null
           let bestOverlapDist = Infinity
           const elHAbs = elH
           for (const b of bodyOnPage) {
@@ -640,58 +640,82 @@ export function snapFloatOverlays(
     container.querySelectorAll('.hiprint-printPaper'),
   ) as HTMLElement[]
 
-  papers.forEach((paper) => {
-    const host =
-      (paper.querySelector('.hiprint-printPaper-content') as HTMLElement) ||
-      paper
-    const nodes = Array.from(
-      host.querySelectorAll('.hiprint-printElement'),
-    ) as HTMLElement[]
+  const norm = (s: string) =>
+    s.replace(/[\s -​　  ]/g, '')
 
-    specs.forEach((spec) => {
-      const img = nodes.find((el) => {
-        if (!el.classList.contains('hiprint-printElement-image')) return false
+  const hostOf = (paper: HTMLElement) =>
+    (paper.querySelector('.hiprint-printPaper-content') as HTMLElement) ||
+    paper
+
+  const findAnchor = (spec: FloatOverlaySpec) => {
+    const wantTitle = norm(spec.anchorTitle)
+    for (const paper of papers) {
+      const nodes = Array.from(
+        hostOf(paper).querySelectorAll('.hiprint-printElement'),
+      ) as HTMLElement[]
+      if (wantTitle) {
+        const byTitle = nodes.find((el) => {
+          if (el.classList.contains('hiprint-printElement-image')) return false
+          const t = norm(el.innerText || '')
+          return t.includes(wantTitle) || wantTitle.includes(t.slice(0, 4))
+        })
+        if (byTitle) return { anchor: byTitle, paper }
+      }
+    }
+    const wantLeft = ptToPx(spec.anchorLeftPt)
+    let best: HTMLElement | null = null
+    let bestDist = Infinity
+    let bestPaper: HTMLElement | null = null
+    for (const paper of papers) {
+      const nodes = Array.from(
+        hostOf(paper).querySelectorAll('.hiprint-printElement'),
+      ) as HTMLElement[]
+      for (const el of nodes) {
+        if (el.classList.contains('hiprint-printElement-image')) continue
         const left = parseLen(el.style.left || '')
+        if (!Number.isFinite(left)) continue
+        const d = Math.abs(left - wantLeft)
+        if (d < bestDist) {
+          bestDist = d
+          best = el
+          bestPaper = paper
+        }
+      }
+    }
+    return best ? { anchor: best, paper: bestPaper! } : null
+  }
+
+  specs.forEach((spec) => {
+    let img: HTMLElement | null = null
+    let imgPaper: HTMLElement | null = null
+    for (const paper of papers) {
+      const found = Array.from(
+        hostOf(paper).querySelectorAll('.hiprint-printElement-image'),
+      ).find((el) => {
+        const left = parseLen((el as HTMLElement).style.left || '')
         return Number.isFinite(left) && Math.abs(left - ptToPx(spec.leftPt)) < 2
       })
-      if (!img) return
-
-      const norm = (s: string) => s.replace(/[\s\u2000-\u200b\u3000  ]/g, '')
-      const wantTitle = norm(spec.anchorTitle)
-      let anchor: HTMLElement | null = null
-      if (wantTitle) {
-        anchor =
-          nodes.find((el) => {
-            if (el.classList.contains('hiprint-printElement-image')) return false
-            const t = norm(el.innerText || '')
-            return t.includes(wantTitle) || wantTitle.includes(t.slice(0, 4))
-          }) || null
+      if (found) {
+        img = found as HTMLElement
+        imgPaper = paper
+        break
       }
-      if (!anchor) {
-        const wantLeft = ptToPx(spec.anchorLeftPt)
-        let best: HTMLElement | null = null
-        let bestDist = Infinity
-        nodes.forEach((el) => {
-          if (el.classList.contains('hiprint-printElement-image')) return
-          const left = parseLen(el.style.left || '')
-          if (!Number.isFinite(left)) return
-          const d = Math.abs(left - wantLeft)
-          if (d < bestDist) {
-            bestDist = d
-            best = el
-          }
-        })
-        anchor = best
-      }
-      if (!anchor) return
+    }
+    if (!img || !imgPaper) return
 
-      const aTop = parseLen(anchor.style.top || '')
-      if (!Number.isFinite(aTop)) return
-      const newTop = aTop + ptToPx(spec.dyPt)
-      img.style.top = `${newTop}px`
-      img.setAttribute('data-page-overlay', '1')
-    })
+    const hit = findAnchor(spec)
+    if (!hit) return
+    const aTop = parseLen(hit.anchor.style.top || '')
+    if (!Number.isFinite(aTop)) return
+
+    if (imgPaper !== hit.paper) {
+      if (img.parentElement) img.parentElement.removeChild(img)
+      hostOf(hit.paper).appendChild(img)
+    }
+    img.style.top = `${aTop + ptToPx(spec.dyPt)}px`
+    img.setAttribute('data-page-overlay', '1')
   })
+
 }
 
 /**

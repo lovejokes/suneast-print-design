@@ -1215,6 +1215,8 @@ export function useHiprint() {
             'contentPaddingRight',
             'contentPaddingBottom',
           ]
+          // 宽高仅在用户实际修改了宽高时才同步（sizeChanged 守卫防止改边框/颜色时误覆盖）
+          const SIZE_BATCH_KEYS = ['width', 'height']
 
           function syncFixedDragState(el: any) {
             if (!el) return
@@ -1234,10 +1236,19 @@ export function useHiprint() {
 
           const origSubmitOption = proto.submitOption
           proto.submitOption = function (this: any) {
+            // 样式属性兼容的类型组：text 与 longText 同为文本类，可互相批量同步字体等
+            const isTextLike = (type: string) => {
+              const t = String(type || '').toLowerCase()
+              return t === 'text' || t === 'longtext'
+            }
+            const isCompatibleType = (a: string, b: string) => {
+              if (a === b) return true
+              return isTextLike(a) && isTextLike(b)
+            }
             // 提交前缓存选中列表（submit 中可能丢 selected）
             const batchTargets = (this.panel?.printElements || []).filter((t: any) => {
               if (String(t.printElementType?.type || '').includes('table')) return false
-              if (t.printElementType?.type !== this.printElementType?.type) return false
+              if (!isCompatibleType(t.printElementType?.type, this.printElementType?.type)) return false
               try {
                 const last = t.designTarget?.children?.()?.last?.()
                 return (
@@ -1250,6 +1261,10 @@ export function useHiprint() {
               }
             })
 
+            // 多选批量样式（字体/颜色/对齐等）；位置固定不批量
+            const peers = batchTargets.filter((el: any) => el !== this)
+            const isBatch = peers.length > 0
+
             // 收集 pristine color 对应的选项名（背景色/边框色默认 #000000 需拦截）
             const container = document.getElementById('PrintElementOptionSetting')
             const pristineOpts: string[] = []
@@ -1261,7 +1276,39 @@ export function useHiprint() {
                 if (ci) pristineOpts.push(item.getAttribute('data-option-name')!)
               })
             }
+            // 文本渲染相关属性：本次提交若改了它们，主元素需重渲染文本；
+            // 否则多选批量改样式时，原生 submitOption 末尾的 updateDesignViewFromOptions
+            // 会按 title/hideTitle 默认值重渲染出「文本：」前缀，破坏元素内容
+            const TEXT_RENDER_KEYS = ['title', 'hideTitle', 'field', 'testData']
+            const prevTextState: Record<string, any> = {}
+            TEXT_RENDER_KEYS.forEach((k) => { prevTextState[k] = this.options[k] })
+            const savedUpdateTargetText = this.updateTargetText
+            if (isBatch) {
+              this.updateTargetText = function () { /* 批量改样式：暂缓文本重渲染 */ }
+            }
+            const prevWidth = this.options.width
+            const prevHeight = this.options.height
             origSubmitOption.call(this)
+            if (isBatch) {
+              this.updateTargetText = savedUpdateTargetText
+              const textChanged = TEXT_RENDER_KEYS.some(
+                (k) => this.options[k] !== prevTextState[k],
+              )
+              if (textChanged && this.designTarget) {
+                try {
+                  this.updateTargetText(this.designTarget, this.getTitle(), this.getData())
+                } catch (_) { /* ignore */ }
+              }
+            }
+            const sizeChanged =
+              this.options.width !== prevWidth ||
+              this.options.height !== prevHeight
+            // widthHeight.css() 通过 getValue() 读取 DOM 输入框再应用 CSS，
+            // 但 updateDesignViewFromOptions 链路中该 CSS 方法未正确生效，
+            // 需直接调用 updateTargetSize 确保主元素 CSS 宽高更新
+            if (sizeChanged && this.designTarget && this.updateTargetSize) {
+              this.updateTargetSize(this.designTarget)
+            }
             // 清除被误设为 #000000 的 pristine 颜色（含多选同伴），避免写进历史后撤销变黑
             let needsRedraw = false
             const clearPristineBlack = (el: any) => {
@@ -1274,24 +1321,40 @@ export function useHiprint() {
             }
             clearPristineBlack(this)
 
-            // 多选批量样式（字体/颜色/对齐等）；位置固定不批量
-            const peers = batchTargets.filter((el: any) => el !== this)
             if (peers.length > 0) {
               peers.forEach((peer: any) => {
                 MULTI_BATCH_KEYS.forEach((key) => {
                   // pristine 色值已在 this 上清空，同步 undefined，勿把 #000000 扩散
                   peer.options[key] = this.options[key]
                 })
+                // 宽高仅在用户实际修改了宽高时才同步（否则改边框/颜色等会误覆盖）
+                if (sizeChanged) {
+                  SIZE_BATCH_KEYS.forEach((key) => {
+                    peer.options[key] = this.options[key]
+                  })
+                }
                 clearPristineBlack(peer)
-                try {
-                  peer.updateDesignViewFromOptions?.()
-                } catch (_) { /* ignore */ }
+                // 只应用样式 css()，不调用 updateDesignViewFromOptions/updateTargetText，
+                // 避免用 title/hideTitle 状态重渲染 peer 文本（产生「文本：」前缀）
+                if (peer.designTarget) {
+                  try {
+                    peer.css?.(peer.designTarget, peer.getData?.())
+                  } catch (_) { /* ignore */ }
+                  // widthHeight.css() 有 this.el == t 守卫，多选对等元素无法通过
+                  // css() 应用宽高，需直接调用 updateTargetSize 设置 CSS
+                  if (sizeChanged && peer.updateTargetSize) {
+                    peer.updateTargetSize(peer.designTarget)
+                  }
+                }
               })
             }
 
             if (needsRedraw) {
               try {
                 this.updateDesignViewFromOptions()
+                if (sizeChanged && this.designTarget && this.updateTargetSize) {
+                  this.updateTargetSize(this.designTarget)
+                }
               } catch (_) { /* ignore */ }
             }
 
