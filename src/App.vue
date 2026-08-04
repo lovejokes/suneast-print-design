@@ -10,6 +10,7 @@
       @print="handlePrint"
       @pdf="handlePdf"
       @update:paper-type="paperTypeChange"
+      @custom-paper="handleCustomPaper"
       @zoom-in="zoomIn"
       @zoom-out="zoomOut"
       @undo="hiprintTemplate?.undo()"
@@ -119,8 +120,13 @@ const paperSizes: Record<string, { width: number; height: number }> = {
   B5: { width: 176, height: 250 },
 }
 
+const customPaperHeightMm = ref(297)
+
 /** 单页纸高：纵向取长边，横向取短边（与方向切换后的画布分页一致） */
 const paperHeight = computed(() => {
+  if (store.paperType === 'custom') {
+    return customPaperHeightMm.value
+  }
   const size = paperSizes[store.paperType] ?? { width: 210, height: 297 }
   const shortEdge = Math.min(size.width, size.height)
   const longEdge = Math.max(size.width, size.height)
@@ -135,6 +141,41 @@ function paperTypeChange(type: string) {
   if (size) {
     hiprintTemplate.value?.setPaper(type, size)
   }
+}
+
+function handleCustomPaper(width: number, height: number) {
+  customPaperHeightMm.value = height
+  store.setPaperType('custom')
+  const tpl = hiprintTemplate.value
+  if (!tpl) return
+  const ep = tpl.editingPanel
+  if (!ep) return
+  const hinnn = (window as any).hinnn
+  if (!hinnn?.mm) return
+  ep.width = width
+  ep.height = height
+  ep.designPaper.width = hinnn.mm.toPt(width)
+  ep.designPaper.height = hinnn.mm.toPt(height)
+  const trim = (window as any).HIPRINT_CONFIG?.panel?.default?.paperHeightTrim ?? 0
+  const heightCss = height - trim + 'mm'
+  ep.designPaper.resize(ep.width, ep.height)
+  ep.designPaper.mmwidth = width
+  ep.designPaper.mmheight = height
+  ep.target.css('height', heightCss)
+  ep.target.attr('original-height', height)
+  ep.target.parent().css('height', heightCss)
+  ep.designPaper.target.css('height', heightCss)
+  const panel = store.template.panels[0]
+  if (panel) {
+    panel.width = width
+    panel.height = height
+  }
+  try {
+    ;(window as any).hinnn?.event?.trigger?.(
+      'hiprintTemplateDataChanged_' + tpl.id,
+      '自定义纸张',
+    )
+  } catch {}
 }
 
 function zoomIn() {

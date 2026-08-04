@@ -21,22 +21,6 @@
 
       <a-button type="text" size="small" @click="$emit('template')">模板</a-button>
 
-      <a-dropdown>
-        <a-button type="text" size="small">导出</a-button>
-        <template #overlay>
-          <a-menu>
-            <a-menu-item @click="$emit('print')">
-              <PrintIcon />
-              <span style="margin-left:6px">打印</span>
-            </a-menu-item>
-            <a-menu-item @click="$emit('pdf')">
-              <PdfIcon />
-              <span style="margin-left:6px">导出 PDF</span>
-            </a-menu-item>
-          </a-menu>
-        </template>
-      </a-dropdown>
-
       <span class="tool-sep" />
 
       <a-select
@@ -178,7 +162,7 @@
       <span class="tool-sep" />
 
       <a-button type="text" size="small" @click="$emit('preview')">
-        预览
+        预览/打印
       </a-button>
     </div>
   </header>
@@ -187,7 +171,6 @@
 <script setup lang="ts">
 import {
   LogoIcon,
-  PrintIcon, PdfIcon,
   ZoomInIcon, ZoomOutIcon,
   UndoIcon, RedoIcon,
   AlignLeftIcon, AlignCenterIcon, AlignRightIcon,
@@ -206,8 +189,6 @@ const emit = defineEmits<{
   new: []
   import: []
   export: []
-  print: []
-  pdf: []
   'update:paperType': [val: string]
   customPaper: [width: number, height: number]
   zoomIn: []

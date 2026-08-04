@@ -178,8 +178,14 @@ function onHandleMouseDown(e: MouseEvent) {
   cutCount.value = 0
   highlightedElements = []
 
-  if (canvasAreaRef.value) {
-    setPreviewLineBottom(canvasAreaRef.value.getBoundingClientRect(), e.clientY)
+  const paper = getPaperEl()
+  if (canvasAreaRef.value && paper && props.canvasHeight > 0) {
+    const areaRect = canvasAreaRef.value.getBoundingClientRect()
+    const paperRect = paper.getBoundingClientRect()
+    const pxPerMm = paperRect.height / props.canvasHeight
+    const paperBottomY = paperRect.top + props.canvasHeight * pxPerMm
+    dragStartClientY = paperBottomY
+    setPreviewLineBottom(areaRect, paperBottomY)
   }
 
   document.addEventListener('mousemove', onMouseMove, true)
@@ -413,6 +419,7 @@ onUnmounted(() => {
 
 #hiprint-printTemplate .hiprint-headerLine,
 #hiprint-printTemplate .hiprint-footerLine {
+  left: 0 !important;
   border-top: 1px dashed #9e9e9e !important;
   opacity: 0.8 !important;
 }
