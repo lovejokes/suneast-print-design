@@ -47,10 +47,10 @@
       >
         <a-form size="small" layout="vertical">
           <a-form-item label="宽度 (mm)">
-            <a-input-number v-model:value="customWidth" :min="50" :max="1000" style="width:100%" />
+            <a-input-number v-model:value="customWidth" :min="1" :max="1000" style="width:100%" />
           </a-form-item>
           <a-form-item label="高度 (mm)">
-            <a-input-number v-model:value="customHeight" :min="50" :max="1000" style="width:100%" />
+            <a-input-number v-model:value="customHeight" :min="1" :max="1000" style="width:100%" />
           </a-form-item>
           <a-button type="primary" block @click="confirmCustomPaper">确定</a-button>
         </a-form>
