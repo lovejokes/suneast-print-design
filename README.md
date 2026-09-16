@@ -99,12 +99,6 @@ app.mount('#app')
 - Ant Design Vue >= 4.2
 - @ant-design/icons-vue >= 7.0
 
-## GitHub Pages 预览站
+## 在线预览
 
-预览站构建的是本仓库的网页应用（`npx vite build`），不是 `.tgz`。把本仓库推到 GitHub 后：
-
-1. 仓库 **Settings → Pages → Source** 选 **GitHub Actions**
-2. 推送到 `master` 或 `main`，等待 Actions 里的 `GitHub Pages` 工作流成功
-3. 打开 `https://<用户名>.github.io/<仓库名>/`
-
-本机没有安装 GitHub CLI，需要你在 GitHub 网页上新建仓库并推送。不要把 `.tgz` 和 `node_modules` 推进去。
+https://lovejokes.github.io/suneast-print-design/
