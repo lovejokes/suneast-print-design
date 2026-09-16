@@ -43,7 +43,7 @@ const jsonTemplates: TemplateDef[] = [
   {
     id: 'template3',
     name: '标签打印',
-    description: '100×50mm 标签，含二维码与订单信息（docs/templates/template3.json）',
+    description: '100×40mm 标签，含二维码与订单信息（docs/templates/template3.json）',
     paperType: 'A4',
     template: template3 as PanelTemplate,
   },
